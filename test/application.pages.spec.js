@@ -1,5 +1,6 @@
 describe('application.pages', function () {
-    var $rootScope, $q, runner, config, configReaderDeferred, configWriterDeferred, configReader, configWriter, editModeRenderer;
+    var $rootScope, $q, runner, config, configReaderDeferred, configWriterDeferred, configReader, configWriter,
+        editModeRenderer, i18n, dispatcher;
 
     angular.module('config', [])
         .value('config', {})
@@ -17,15 +18,28 @@ describe('application.pages', function () {
             return jasmine.createSpyObj('editModeRenderer', ['open', 'close']);
         });
 
+    angular.module('i18n', [])
+        .service('i18n', function () {
+            return jasmine.createSpyObj('i18n', ['resolve', 'translate']);
+        });
+
+    angular.module('notifications', [])
+        .service('topicMessageDispatcher', function () {
+            return jasmine.createSpyObj('topicMessageDispatcher', ['fire']);
+        });
+
     beforeEach(module('application.pages'));
 
-    beforeEach(inject(function (_$rootScope_, applicationPageRunner, _config_, _configReader_, _configWriter_, _editModeRenderer_) {
+    beforeEach(inject(function (_$rootScope_, applicationPageRunner, _config_, _configReader_, _configWriter_,
+                                _editModeRenderer_, _i18n_, topicMessageDispatcher) {
         $rootScope = _$rootScope_;
         runner = applicationPageRunner;
         config = _config_;
         configReader = _configReader_;
         configWriter = _configWriter_;
         editModeRenderer = _editModeRenderer_;
+        i18n = _i18n_;
+        dispatcher = topicMessageDispatcher;
     }));
 
     describe('on run', function () {
@@ -101,9 +115,14 @@ describe('application.pages', function () {
     });
 
     describe('applicationPageController', function () {
-        var ctrl;
+        var ctrl, i18nResolveDeferred, i18nTranslateDeferred;
 
-        beforeEach(inject(function ($controller) {
+        beforeEach(inject(function ($controller, $q) {
+            i18nResolveDeferred = $q.defer();
+            i18nTranslateDeferred = $q.defer();
+            i18n.resolve.andReturn(i18nResolveDeferred.promise);
+            i18n.translate.andReturn(i18nTranslateDeferred.promise);
+
             $rootScope.application = {
                 pages: {
                     page1: {
@@ -141,36 +160,122 @@ describe('application.pages', function () {
                     scope = editModeRenderer.open.calls[0].args[0].scope;
                 });
 
-                it('pages are available', function () {
-                    expect(scope.pages).toEqual([{
-                        name: 'page1',
-                        priority: 0,
-                        active: false
-                    },{
-                        name: 'page2',
-                        priority: 1,
-                        active: false
-                    }]);
+                it('resolve page translations', function () {
+                    expect(i18n.resolve.calls[0].args[0]).toEqual({code: 'navigation.label.page1'});
+                    expect(i18n.resolve.calls[1].args[0]).toEqual({code: 'navigation.label.page2'});
                 });
 
-                describe('on page update', function () {
+                describe('when translations are rejected', function () {
                     beforeEach(function () {
-                        scope.pages[0].active = true;
-
-                        scope.updatePage(scope.pages[0]);
+                        i18nResolveDeferred.reject();
+                        scope.$digest();
                     });
 
-                    it('config writer is called', function () {
-                        expect(configWriter.calls[0].args[0]).toEqual({
-                            $scope: scope,
-                            scope: 'public',
-                            key: 'application.pages.page1.active',
-                            value: true
+                    it('pages are available with default names', function () {
+                        expect(scope.pages).toEqual([{
+                            name: 'page1',
+                            priority: 0,
+                            active: false,
+                            translation: 'page1',
+                            updatedTranslation: 'page1'
+                        },{
+                            name: 'page2',
+                            priority: 1,
+                            active: false,
+                            translation: 'page2',
+                            updatedTranslation: 'page2'
+                        }]);
+                    });
+                });
+
+                describe('when translations are resolved', function () {
+                    beforeEach(function () {
+                        i18nResolveDeferred.resolve('translation');
+                        scope.$digest();
+                    });
+
+                    it('pages are available', function () {
+                        expect(scope.pages).toEqual([{
+                            name: 'page1',
+                            priority: 0,
+                            active: false,
+                            translation: 'translation',
+                            updatedTranslation: 'translation'
+                        },{
+                            name: 'page2',
+                            priority: 1,
+                            active: false,
+                            translation: 'translation',
+                            updatedTranslation: 'translation'
+                        }]);
+                    });
+
+                    describe('on page active toggle', function () {
+                        beforeEach(function () {
+                            scope.pages[0].active = true;
+
+                            scope.togglePage(scope.pages[0]);
+                        });
+
+                        it('config writer is called', function () {
+                            expect(configWriter.calls[0].args[0]).toEqual({
+                                $scope: scope,
+                                scope: 'public',
+                                key: 'application.pages.page1.active',
+                                value: true
+                            });
+                        });
+
+                        it('value on rootScope is updated', function () {
+                            expect($rootScope.application.pages.page1.active).toBeTruthy();
                         });
                     });
 
-                    it('value on rootScope is updated', function () {
-                        expect($rootScope.application.pages.page1.active).toBeTruthy();
+                    describe('on translate page name', function () {
+                        var page;
+
+                        beforeEach(function () {
+                            page = scope.pages[1];
+                            page.updatedTranslation = 'updated';
+
+                            scope.translate(page);
+                        });
+
+                        it('i18n translate is called', function () {
+                            expect(i18n.translate).toHaveBeenCalledWith({
+                                code: 'navigation.label.page2',
+                                translation: 'updated'
+                            });
+                        });
+
+                        it('scope is in working state', function () {
+                            expect(scope.working).toBeTruthy();
+                        });
+
+                        describe('on translate success', function () {
+                            beforeEach(function () {
+                                i18nTranslateDeferred.resolve();
+                                scope.$digest();
+                            });
+
+                            it('page on scope is updated', function () {
+                                expect(page).toEqual({
+                                    name: 'page2',
+                                    priority: 1,
+                                    active: false,
+                                    translation: 'updated',
+                                    updatedTranslation: 'updated'
+                                });
+                            });
+
+                            it('i18n.updated notification is fired', function () {
+                                expect(dispatcher.fire).toHaveBeenCalledWith('i18n.updated', { code : 'navigation.label.page2', translation : 'updated' });
+                            });
+
+                            it('scope is not in working state', function () {
+                                expect(scope.working).toBeFalsy();
+                            });
+                        });
                     });
                 });
 
