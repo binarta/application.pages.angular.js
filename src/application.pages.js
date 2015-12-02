@@ -90,7 +90,7 @@
                     '<div class="form-group">' +
                         '<table class="table">' +
                             '<tr ng-repeat="page in pages | orderBy:\'priority\'">' +
-                                '<td>' +
+                                '<td style="width:80px">' +
                                     '<div class="checkbox-switch">' +
                                         '<input type="checkbox" id="page-{{::page.name}}-switch" ng-model="page.active" ng-change="togglePage(page)">' +
                                         '<label for="page-{{::page.name}}-switch"></label>' +
