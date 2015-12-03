@@ -85,8 +85,7 @@
             };
 
             renderer.open({
-                template: '<form>' +
-                '<div class="bin-menu-edit-body">' +
+                template: '<div class="bin-menu-edit-body">' +
                     '<div class="form-group">' +
                         '<table class="table">' +
                             '<tr ng-repeat="page in pages | orderBy:\'priority\'">' +
@@ -99,15 +98,17 @@
                                 '<td>' +
                                     '<div i18n code="navigation.label.{{::page.name}}" read-only ng-bind="var" ng-hide="page.active">' +
                                     '</div>' +
-                                    '<div ng-class="{\'input-group\': page.translation != page.updatedTranslation}" ng-show="page.active">' +
-                                        '<input type="text" class="form-control" ng-model="page.updatedTranslation">' +
-                                        '<span class="input-group-btn" ng-show="page.translation != page.updatedTranslation">' +
-                                            '<button type="button" class="btn btn-success" ng-click="translate(page)" ng-disabled="working">' +
-                                                '<span ng-hide="working"><i class="fa fa-check"></i></span>' +
-                                                '<span ng-show="working"><i class="fa fa-spinner fa-spin"></i></span>' +
-                                            '</button>' +
-                                        '</span>' +
-                                    '</div>' +
+                                    '<form ng-submit="translate(page)">' +
+                                        '<div ng-class="{\'input-group\': page.translation != page.updatedTranslation}" ng-show="page.active">' +
+                                            '<input type="text" class="form-control" ng-model="page.updatedTranslation">' +
+                                            '<span class="input-group-btn" ng-show="page.translation != page.updatedTranslation">' +
+                                                '<button type="submit" class="btn btn-success" ng-disabled="working">' +
+                                                    '<span ng-hide="working"><i class="fa fa-check"></i></span>' +
+                                                    '<span ng-show="working"><i class="fa fa-spinner fa-spin"></i></span>' +
+                                                '</button>' +
+                                            '</span>' +
+                                        '</div>' +
+                                    '</form>' +
                                 '</td>' +
                             '</tr>' +
                         '</table>' +
@@ -115,8 +116,7 @@
                 '</div>' +
                 '<div class="bin-menu-edit-actions">' +
                     '<button type="button" class="btn btn-default" ng-click="close()" i18n code="clerk.menu.close.button" read-only ng-bind="::var"></button>' +
-                '</div>' +
-                '</form>',
+                '</div>',
                 scope: rendererScope
             });
         }
