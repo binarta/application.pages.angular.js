@@ -1,0 +1,17 @@
+{
+  "msgs":{
+    "nl":{
+      "application.pages.add.section": "Voeg een sectie toe",
+      "application.pages.add.page": "Voeg een pagina toe"
+    }, "en":{
+      "application.pages.add.section": "Add section",
+      "application.pages.add.page": "Add page"
+    }, "fr":{
+      "application.pages.add.section": "Add section",
+      "application.pages.add.page": "Add page"
+    }, "de":{
+      "application.pages.add.section": "Add section",
+      "application.pages.add.page": "Add page"
+    }
+  }
+}

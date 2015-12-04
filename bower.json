@@ -1,6 +1,9 @@
 {
   "name": "binarta.application.pages.angular",
-  "main": "./src/application.pages.js",
+  "main": [
+    "./src/application.pages.js",
+    "./metadata-system.json"
+  ],
   "dependencies": {
     "angular": "1.3.*",
     "binarta.config.angular": "0.*.*",
