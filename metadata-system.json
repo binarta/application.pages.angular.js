@@ -2,16 +2,20 @@
   "msgs":{
     "nl":{
       "application.pages.add.section": "Voeg een sectie toe",
-      "application.pages.add.page": "Voeg een pagina toe"
+      "application.pages.add.page": "Voeg een pagina toe",
+      "application.brand.error": "Er is iets misgegaan. Gelieve opnieuw te proberen."
     }, "en":{
       "application.pages.add.section": "Add section",
-      "application.pages.add.page": "Add page"
+      "application.pages.add.page": "Add page",
+      "application.pages.error": "Something went wrong. Please try again."
     }, "fr":{
       "application.pages.add.section": "Add section",
-      "application.pages.add.page": "Add page"
+      "application.pages.add.page": "Add page",
+      "application.pages.error": "Something went wrong. Please try again."
     }, "de":{
       "application.pages.add.section": "Add section",
-      "application.pages.add.page": "Add page"
+      "application.pages.add.page": "Add page",
+      "application.pages.error": "Something went wrong. Please try again."
     }
   }
 }

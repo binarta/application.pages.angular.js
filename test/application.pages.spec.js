@@ -172,18 +172,28 @@ describe('application.pages', function () {
                     });
 
                     it('pages are available with default names', function () {
-                        expect(scope.pages).toEqual([{
+                        expect(scope.pages.before).toEqual([{
                             name: 'page1',
                             priority: 0,
                             active: false,
-                            translation: 'page1',
-                            updatedTranslation: 'page1'
+                            translation: 'page1'
                         },{
                             name: 'page2',
                             priority: 1,
                             active: false,
-                            translation: 'page2',
-                            updatedTranslation: 'page2'
+                            translation: 'page2'
+                        }]);
+
+                        expect(scope.pages.after).toEqual([{
+                            name: 'page1',
+                            priority: 0,
+                            active: false,
+                            translation: 'page1'
+                        },{
+                            name: 'page2',
+                            priority: 1,
+                            active: false,
+                            translation: 'page2'
                         }]);
                     });
                 });
@@ -195,85 +205,102 @@ describe('application.pages', function () {
                     });
 
                     it('pages are available', function () {
-                        expect(scope.pages).toEqual([{
+                        expect(scope.pages.before).toEqual([{
                             name: 'page1',
                             priority: 0,
                             active: false,
-                            translation: 'translation',
-                            updatedTranslation: 'translation'
+                            translation: 'translation'
                         },{
                             name: 'page2',
                             priority: 1,
                             active: false,
-                            translation: 'translation',
-                            updatedTranslation: 'translation'
+                            translation: 'translation'
+                        }]);
+
+                        expect(scope.pages.after).toEqual([{
+                            name: 'page1',
+                            priority: 0,
+                            active: false,
+                            translation: 'translation'
+                        },{
+                            name: 'page2',
+                            priority: 1,
+                            active: false,
+                            translation: 'translation'
                         }]);
                     });
 
-                    describe('on page active toggle', function () {
-                        beforeEach(function () {
-                            scope.pages[0].active = true;
+                    it('changes on pages should not affect before state', function () {
+                        scope.pages.after[0].active = true;
 
-                            scope.togglePage(scope.pages[0]);
-                        });
-
-                        it('config writer is called', function () {
-                            expect(configWriter.calls[0].args[0]).toEqual({
-                                $scope: scope,
-                                scope: 'public',
-                                key: 'application.pages.page1.active',
-                                value: true
-                            });
-                        });
-
-                        it('value on rootScope is updated', function () {
-                            expect($rootScope.application.pages.page1.active).toBeTruthy();
-                        });
+                        expect(scope.pages.before[0].active).toBeFalsy();
                     });
 
-                    describe('on translate page name', function () {
-                        var page;
-
-                        beforeEach(function () {
-                            page = scope.pages[1];
-                            page.updatedTranslation = 'updated';
-
-                            scope.translate(page);
-                        });
-
-                        it('i18n translate is called', function () {
-                            expect(i18n.translate).toHaveBeenCalledWith({
-                                code: 'navigation.label.page2',
-                                translation: 'updated'
-                            });
-                        });
-
-                        it('scope is in working state', function () {
-                            expect(scope.working).toBeTruthy();
-                        });
-
-                        describe('on translate success', function () {
+                    describe('on save', function () {
+                        describe('with nothing changed', function () {
                             beforeEach(function () {
-                                i18nTranslateDeferred.resolve();
+                                scope.save();
                                 scope.$digest();
                             });
 
-                            it('page on scope is updated', function () {
-                                expect(page).toEqual({
-                                    name: 'page2',
-                                    priority: 1,
-                                    active: false,
-                                    translation: 'updated',
-                                    updatedTranslation: 'updated'
+                            it('nothing need to be persisted', function () {
+                                expect(configWriter).not.toHaveBeenCalled();
+                                expect(i18n.translate).not.toHaveBeenCalled();
+                            });
+
+                            it('editModeRenderer is closed', function () {
+                                expect(editModeRenderer.close).toHaveBeenCalled();
+                            });
+                        });
+
+                        describe('with changes', function () {
+                            beforeEach(function () {
+                                scope.pages.after[0].active = true;
+                                scope.pages.after[0].translation = 'updated';
+                                scope.pages.after[1].translation = 'updated';
+
+                                scope.save();
+                            });
+
+                            describe('changes are persisted', function () {
+                                it('update config', function () {
+                                    expect(configWriter.calls.length).toEqual(1);
+                                    expect(configWriter.calls[0].args[0]).toEqual({
+                                        $scope: scope,
+                                        scope: 'public',
+                                        key: 'application.pages.page1.active',
+                                        value: true
+                                    });
                                 });
-                            });
 
-                            it('i18n.updated notification is fired', function () {
-                                expect(dispatcher.fire).toHaveBeenCalledWith('i18n.updated', { code : 'navigation.label.page2', translation : 'updated' });
-                            });
+                                it('update translations', function () {
+                                    expect(i18n.translate.calls.length).toEqual(1);
+                                    expect(i18n.translate).toHaveBeenCalledWith({
+                                        code: 'navigation.label.page1',
+                                        translation: 'updated'
+                                    });
+                                });
 
-                            it('scope is not in working state', function () {
-                                expect(scope.working).toBeFalsy();
+                                describe('on success', function () {
+                                    beforeEach(function () {
+                                        configWriterDeferred.resolve();
+                                        i18nTranslateDeferred.resolve();
+                                        scope.$digest();
+                                    });
+
+                                    it('value on rootScope is updated', function () {
+                                        expect($rootScope.application.pages.page1.active).toBeTruthy();
+                                    });
+
+                                    it('i18n.updated notification is fired', function () {
+                                        expect(dispatcher.fire).toHaveBeenCalledWith('i18n.updated', { code : 'navigation.label.page1', translation : 'updated' });
+                                    });
+
+                                    it('editModeRenderer is closed', function () {
+                                        expect(editModeRenderer.close).toHaveBeenCalled();
+                                    });
+                                });
+
                             });
                         });
                     });

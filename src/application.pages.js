@@ -2,7 +2,7 @@
     'use strict';
     angular.module('application.pages', ['config', 'toggle.edit.mode', 'i18n', 'notifications'])
         .service('applicationPageRunner', ['$rootScope', 'configReader', 'config', ApplicationPageRunner])
-        .controller('applicationPageController', ['$rootScope', 'editModeRenderer', 'configWriter', 'i18n', 'topicMessageDispatcher', ApplicationPageController])
+        .controller('applicationPageController', ['$rootScope', '$q', 'editModeRenderer', 'configWriter', 'i18n', 'topicMessageDispatcher', ApplicationPageController])
         .run(['applicationPageRunner', function (runner) {
             runner.run();
         }]);
@@ -36,21 +36,62 @@
         };
     }
 
-    function ApplicationPageController($rootScope, renderer, writer, i18n, dispatcher) {
+    function ApplicationPageController($rootScope, $q, renderer, writer, i18n, dispatcher) {
         this.open = function () {
             var rendererScope = $rootScope.$new();
-            rendererScope.pages = [];
+
+            renderer.open({
+                template:
+                '<form ng-submit="save()">' +
+                    '<div class="bin-menu-edit-body">' +
+
+                        '<div class="alert alert-danger" ng-show="violation">' +
+                            '<i class="fa fa-exclamation-triangle"></i> ' +
+                            '<span i18n code="application.pages.error" read-only ng-bind="::var"></span>' +
+                        '</div>' +
+
+                        '<div class="form-group">' +
+                            '<table class="table">' +
+                                '<tr ng-repeat="page in pages.after | orderBy:\'priority\'">' +
+                                    '<td style="width:80px">' +
+                                        '<div class="checkbox-switch">' +
+                                            '<input type="checkbox" id="page-{{::page.name}}-switch" ng-model="page.active" ng-change="togglePage(page)">' +
+                                            '<label for="page-{{::page.name}}-switch"></label>' +
+                                        '</div>' +
+                                    '</td>' +
+                                    '<td>' +
+                                        '<div i18n code="navigation.label.{{::page.name}}" read-only ng-bind="var" ng-hide="page.active"></div>' +
+                                        '<input type="text" class="form-control" ng-model="page.translation" ng-show="page.active">' +
+                                    '</td>' +
+                                '</tr>' +
+                            '</table>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="bin-menu-edit-actions">' +
+                        '<button type="submit" class="btn btn-primary" ng-disabled="working" i18n code="clerk.menu.save.button" read-only>' +
+                            '<span ng-show="working"><i class="fa fa-spinner fa-spin"></i></span> {{::var}}' +
+                        '</button>' +
+                        '<button type="button" class="btn btn-default" ng-click="close()" ng-disabled="working" i18n code="clerk.menu.close.button" read-only ng-bind="::var"></button>' +
+                    '</div>' +
+                '</form>',
+                scope: rendererScope
+            });
+
+            rendererScope.pages = {
+                before: [],
+                after: []
+            };
             angular.forEach($rootScope.application.pages, function (page) {
                 i18n.resolve({
                     code: 'navigation.label.' + page.name
                 }).then(function (translation) {
                     page.translation = translation;
-                    page.updatedTranslation = translation;
-                    rendererScope.pages.push(page);
+                    rendererScope.pages.before.push(page);
+                    rendererScope.pages.after.push(angular.copy(page));
                 }, function () {
                     page.translation = page.name;
-                    page.updatedTranslation = page.name;
-                    rendererScope.pages.push(page);
+                    rendererScope.pages.before.push(page);
+                    rendererScope.pages.after.push(angular.copy(page));
                 });
             });
 
@@ -58,67 +99,47 @@
                 renderer.close();
             };
 
-            rendererScope.togglePage = function (page) {
-                writer({
-                    $scope: rendererScope,
-                    scope: 'public',
-                    key: 'application.pages.' + page.name + '.active',
-                    value: page.active
-                });
-            };
-
-            rendererScope.translate = function (page) {
+            rendererScope.save = function () {
                 rendererScope.working = true;
+                var before = rendererScope.pages.before;
+                var after = rendererScope.pages.after;
+                var promises = [];
 
-                i18n.translate({
-                    code: 'navigation.label.' + page.name,
-                    translation: page.updatedTranslation
-                }).then(function () {
-                    page.translation = page.updatedTranslation;
-                    dispatcher.fire('i18n.updated', {
-                        code: 'navigation.label.' + page.name,
-                        translation: page.updatedTranslation
-                    });
-                }).finally(function () {
+                for (var i = 0; i < after.length; i++) {
+                    if (before[i].active != after[i].active) promises.push(updateConfig(after[i]));
+                    if (after[i].active && before[i].translation != after[i].translation) promises.push(updateTranslation(after[i]));
+                }
+
+                $q.all(promises).then(function () {
+                    renderer.close();
+                }, function () {
+                    rendererScope.violation = true;
                     rendererScope.working = false;
                 });
             };
 
-            renderer.open({
-                template: '<div class="bin-menu-edit-body">' +
-                    '<div class="form-group">' +
-                        '<table class="table">' +
-                            '<tr ng-repeat="page in pages | orderBy:\'priority\'">' +
-                                '<td style="width:80px">' +
-                                    '<div class="checkbox-switch">' +
-                                        '<input type="checkbox" id="page-{{::page.name}}-switch" ng-model="page.active" ng-change="togglePage(page)">' +
-                                        '<label for="page-{{::page.name}}-switch"></label>' +
-                                    '</div>' +
-                                '</td>' +
-                                '<td>' +
-                                    '<div i18n code="navigation.label.{{::page.name}}" read-only ng-bind="var" ng-hide="page.active">' +
-                                    '</div>' +
-                                    '<form ng-submit="translate(page)">' +
-                                        '<div ng-class="{\'input-group\': page.translation != page.updatedTranslation}" ng-show="page.active">' +
-                                            '<input type="text" class="form-control" ng-model="page.updatedTranslation">' +
-                                            '<span class="input-group-btn" ng-show="page.translation != page.updatedTranslation">' +
-                                                '<button type="submit" class="btn btn-success" ng-disabled="working">' +
-                                                    '<span ng-hide="working"><i class="fa fa-check"></i></span>' +
-                                                    '<span ng-show="working"><i class="fa fa-spinner fa-spin"></i></span>' +
-                                                '</button>' +
-                                            '</span>' +
-                                        '</div>' +
-                                    '</form>' +
-                                '</td>' +
-                            '</tr>' +
-                        '</table>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="bin-menu-edit-actions">' +
-                    '<button type="button" class="btn btn-default" ng-click="close()" i18n code="clerk.menu.close.button" read-only ng-bind="::var"></button>' +
-                '</div>',
-                scope: rendererScope
-            });
+            function updateConfig(page) {
+                return writer({
+                    $scope: rendererScope,
+                    scope: 'public',
+                    key: 'application.pages.' + page.name + '.active',
+                    value: page.active
+                }).then(function () {
+                    $rootScope.application.pages[page.name].active = page.active;
+                });
+            }
+
+            function updateTranslation(page) {
+                return i18n.translate({
+                    code: 'navigation.label.' + page.name,
+                    translation: page.translation
+                }).then(function () {
+                    dispatcher.fire('i18n.updated', {
+                        code: 'navigation.label.' + page.name,
+                        translation: page.translation
+                    });
+                });
+            }
         }
     }
 })();
