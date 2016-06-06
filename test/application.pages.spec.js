@@ -6,11 +6,11 @@ describe('application.pages', function () {
         .value('config', {})
         .factory('configReader', ['$q', function ($q) {
             configReaderDeferred = $q.defer();
-            return jasmine.createSpy('configReader').andReturn(configReaderDeferred.promise);
+            return jasmine.createSpy('configReader').and.returnValue(configReaderDeferred.promise);
         }])
         .factory('configWriter', ['$q', function ($q) {
             configWriterDeferred = $q.defer();
-            return jasmine.createSpy('configWriter').andReturn(configWriterDeferred.promise);
+            return jasmine.createSpy('configWriter').and.returnValue(configWriterDeferred.promise);
         }]);
 
     angular.module('toggle.edit.mode', [])
@@ -62,12 +62,12 @@ describe('application.pages', function () {
                 });
 
                 it('requests are made', function () {
-                    expect(configReader.calls[0].args[0]).toEqual({
+                    expect(configReader.calls.first().args[0]).toEqual({
                         $scope: {},
                         scope: 'public',
                         key: 'application.pages.page1.active'
                     });
-                    expect(configReader.calls[1].args[0]).toEqual({
+                    expect(configReader.calls.mostRecent().args[0]).toEqual({
                         $scope: {},
                         scope: 'public',
                         key: 'application.pages.page2.active'
@@ -120,8 +120,8 @@ describe('application.pages', function () {
         beforeEach(inject(function ($controller, $q) {
             i18nResolveDeferred = $q.defer();
             i18nTranslateDeferred = $q.defer();
-            i18n.resolve.andReturn(i18nResolveDeferred.promise);
-            i18n.translate.andReturn(i18nTranslateDeferred.promise);
+            i18n.resolve.and.returnValue(i18nResolveDeferred.promise);
+            i18n.translate.and.returnValue(i18nTranslateDeferred.promise);
 
             $rootScope.application = {
                 pages: {
@@ -157,12 +157,12 @@ describe('application.pages', function () {
                 var scope;
 
                 beforeEach(function () {
-                    scope = editModeRenderer.open.calls[0].args[0].scope;
+                    scope = editModeRenderer.open.calls.first().args[0].scope;
                 });
 
                 it('resolve page translations', function () {
-                    expect(i18n.resolve.calls[0].args[0]).toEqual({code: 'navigation.label.page1'});
-                    expect(i18n.resolve.calls[1].args[0]).toEqual({code: 'navigation.label.page2'});
+                    expect(i18n.resolve.calls.first().args[0]).toEqual({code: 'navigation.label.page1'});
+                    expect(i18n.resolve.calls.mostRecent().args[0]).toEqual({code: 'navigation.label.page2'});
                 });
 
                 describe('when translations are rejected', function () {
@@ -264,8 +264,8 @@ describe('application.pages', function () {
 
                             describe('changes are persisted', function () {
                                 it('update config', function () {
-                                    expect(configWriter.calls.length).toEqual(1);
-                                    expect(configWriter.calls[0].args[0]).toEqual({
+                                    expect(configWriter.calls.count()).toEqual(1);
+                                    expect(configWriter.calls.first().args[0]).toEqual({
                                         $scope: scope,
                                         scope: 'public',
                                         key: 'application.pages.page1.active',
@@ -274,7 +274,7 @@ describe('application.pages', function () {
                                 });
 
                                 it('update translations', function () {
-                                    expect(i18n.translate.calls.length).toEqual(1);
+                                    expect(i18n.translate.calls.count()).toEqual(1);
                                     expect(i18n.translate).toHaveBeenCalledWith({
                                         code: 'navigation.label.page1',
                                         translation: 'updated'

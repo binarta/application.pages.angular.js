@@ -1,0 +1,5 @@
+{
+  "default": {
+    "application.pages":"bower_components/binarta.application.pages.angular/src/application.pages.js"
+  }
+}
