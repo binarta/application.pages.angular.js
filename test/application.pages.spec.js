@@ -1,5 +1,5 @@
 describe('application.pages', function () {
-    var $rootScope, $q, runner, config, configReaderDeferred, configWriterDeferred, configReader, configWriter,
+    var binarta, $rootScope, $q, runner, config, configReaderDeferred, configWriterDeferred, configReader, configWriter,
         editModeRenderer, i18n, dispatcher;
 
     angular.module('config', [])
@@ -30,8 +30,9 @@ describe('application.pages', function () {
 
     beforeEach(module('application.pages'));
 
-    beforeEach(inject(function (_$rootScope_, applicationPageRunner, _config_, _configReader_, _configWriter_,
+    beforeEach(inject(function (_binarta_, _$rootScope_, applicationPageRunner, _config_, _configReader_, _configWriter_,
                                 _editModeRenderer_, _i18n_, topicMessageDispatcher) {
+        binarta = _binarta_;
         $rootScope = _$rootScope_;
         runner = applicationPageRunner;
         config = _config_;
@@ -52,26 +53,11 @@ describe('application.pages', function () {
                 config.application = {
                     pages: ['page1', 'page2']
                 };
-                runner.run();
             });
 
             describe('and no page configuration', function () {
-                beforeEach(function () {
-                    configReaderDeferred.reject();
-                    $rootScope.$digest();
-                });
-
-                it('requests are made', function () {
-                    expect(configReader.calls.first().args[0]).toEqual({
-                        $scope: {},
-                        scope: 'public',
-                        key: 'application.pages.page1.active'
-                    });
-                    expect(configReader.calls.mostRecent().args[0]).toEqual({
-                        $scope: {},
-                        scope: 'public',
-                        key: 'application.pages.page2.active'
-                    });
+                beforeEach(function() {
+                    runner.run();
                 });
 
                 it('they are also on rootScope', function () {
@@ -92,8 +78,9 @@ describe('application.pages', function () {
 
             describe('when pages are active', function () {
                 beforeEach(function () {
-                    configReaderDeferred.resolve({data: {value: 'true'}});
-                    $rootScope.$digest();
+                    binarta.application.gateway.addPublicConfig({id:'application.pages.page1.active', value:'true'});
+                    binarta.application.gateway.addPublicConfig({id:'application.pages.page2.active', value:'true'});
+                    runner.run();
                 });
 
                 it('they are also active on rootScope', function () {

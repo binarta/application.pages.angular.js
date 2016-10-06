@@ -1,34 +1,24 @@
 (function () {
     'use strict';
-    angular.module('application.pages', ['config', 'toggle.edit.mode', 'i18n', 'notifications'])
-        .service('applicationPageRunner', ['$rootScope', 'configReader', 'config', ApplicationPageRunner])
+    angular.module('application.pages', ['binarta-applicationjs-angular1', 'config', 'toggle.edit.mode', 'i18n', 'notifications'])
+        .service('applicationPageRunner', ['binarta', '$rootScope', 'configReader', 'config', ApplicationPageRunner])
         .controller('applicationPageController', ['$rootScope', '$q', 'editModeRenderer', 'configWriter', 'i18n', 'topicMessageDispatcher', ApplicationPageController])
         .run(['applicationPageRunner', function (runner) {
             runner.run();
         }]);
 
-    function ApplicationPageRunner($rootScope, reader, config) {
+    function ApplicationPageRunner(binarta, $rootScope, reader, config) {
         this.run = function () {
             $rootScope.application = $rootScope.application || {};
             $rootScope.application.pages = {};
 
             if (config.application && config.application.pages) {
                 config.application.pages.forEach(function (name) {
-                    reader({
-                        $scope: {},
-                        scope: 'public',
-                        key: 'application.pages.' + name + '.active'
-                    }).then(function (result) {
+                    binarta.application.config.findPublic('application.pages.' + name + '.active', function(value) {
                         $rootScope.application.pages[name] = {
                             name: name,
                             priority: config.application.pages.indexOf(name),
-                            active: result.data.value == 'true'
-                        };
-                    }, function () {
-                        $rootScope.application.pages[name] = {
-                            name: name,
-                            priority: config.application.pages.indexOf(name),
-                            active: false
+                            active: value == 'true'
                         };
                     });
                 });
