@@ -1,28 +1,30 @@
 (function () {
     'use strict';
     angular.module('application.pages', ['binarta-applicationjs-angular1', 'config', 'toggle.edit.mode', 'i18n', 'notifications'])
-        .service('applicationPageRunner', ['binarta', '$rootScope', 'configReader', 'config', ApplicationPageRunner])
+        .service('applicationPageInitialiser', ['binartaIsInitialised', '$rootScope', 'config', ApplicationPageInitialiser])
         .controller('applicationPageController', ['$rootScope', '$q', 'editModeRenderer', 'configWriter', 'i18n', 'topicMessageDispatcher', ApplicationPageController])
-        .run(['applicationPageRunner', function (runner) {
-            runner.run();
+        .run(['applicationPageInitialiser', function (initialiser) {
+            initialiser.execute();
         }]);
 
-    function ApplicationPageRunner(binarta, $rootScope, reader, config) {
-        this.run = function () {
-            $rootScope.application = $rootScope.application || {};
-            $rootScope.application.pages = {};
+    function ApplicationPageInitialiser(binartaIsInitialised, $rootScope, config) {
+        this.execute = function () {
+            binartaIsInitialised.then(function(binarta) {
+                $rootScope.application = $rootScope.application || {};
+                $rootScope.application.pages = {};
 
-            if (config.application && config.application.pages) {
-                config.application.pages.forEach(function (name) {
-                    binarta.application.config.findPublic('application.pages.' + name + '.active', function(value) {
-                        $rootScope.application.pages[name] = {
-                            name: name,
-                            priority: config.application.pages.indexOf(name),
-                            active: value == 'true'
-                        };
+                if (config.application && config.application.pages) {
+                    config.application.pages.forEach(function (name) {
+                        binarta.application.config.findPublic('application.pages.' + name + '.active', function(value) {
+                            $rootScope.application.pages[name] = {
+                                name: name,
+                                priority: config.application.pages.indexOf(name),
+                                active: value == 'true'
+                            };
+                        });
                     });
-                });
-            }
+                }
+            });
         };
     }
 

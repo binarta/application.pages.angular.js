@@ -30,11 +30,11 @@ describe('application.pages', function () {
 
     beforeEach(module('application.pages'));
 
-    beforeEach(inject(function (_binarta_, _$rootScope_, applicationPageRunner, _config_, _configReader_, _configWriter_,
+    beforeEach(inject(function (_binarta_, _$rootScope_, applicationPageInitialiser, _config_, _configReader_, _configWriter_,
                                 _editModeRenderer_, _i18n_, topicMessageDispatcher) {
         binarta = _binarta_;
         $rootScope = _$rootScope_;
-        runner = applicationPageRunner;
+        runner = applicationPageInitialiser;
         config = _config_;
         configReader = _configReader_;
         configWriter = _configWriter_;
@@ -43,24 +43,36 @@ describe('application.pages', function () {
         dispatcher = topicMessageDispatcher;
     }));
 
-    describe('on run', function () {
-        it('when nothing defined in config', function () {
-            expect($rootScope.application.pages).toEqual({});
+    describe('ApplicationPagesInitialiser', function () {
+        it('execute waits for binarta to be initialised', function() {
+            runner.execute();
+            $rootScope.$digest();
+            expect($rootScope.application).toBeUndefined();
         });
 
-        describe('when pages are defined in config', function () {
-            beforeEach(function () {
-                config.application = {
-                    pages: ['page1', 'page2']
-                };
+        describe('given binarta is initialised', function() {
+            beforeEach(inject(function(binartaGatewaysAreInitialised, binartaConfigIsInitialised, binartaCachesAreInitialised) {
+                binartaGatewaysAreInitialised.resolve();
+                binartaConfigIsInitialised.resolve();
+                binartaCachesAreInitialised.resolve();
+            }));
+
+            it('and nothing is defined in config then execute does nothing', function () {
+                runner.execute();
+                $rootScope.$digest();
+                expect($rootScope.application.pages).toEqual({});
             });
 
-            describe('and no page configuration', function () {
-                beforeEach(function() {
-                    runner.run();
+            describe('and pages are defined in config', function () {
+                beforeEach(function () {
+                    config.application = {
+                        pages: ['page1', 'page2']
+                    };
                 });
 
-                it('they are also on rootScope', function () {
+                it('and pages are not enabled then this is reflected on the root scope', function () {
+                    runner.execute();
+                    $rootScope.$digest();
                     expect($rootScope.application.pages).toEqual({
                         page1: {
                             name: 'page1',
@@ -74,16 +86,14 @@ describe('application.pages', function () {
                         }
                     });
                 });
-            });
 
-            describe('when pages are active', function () {
-                beforeEach(function () {
-                    binarta.application.gateway.addPublicConfig({id:'application.pages.page1.active', value:'true'});
-                    binarta.application.gateway.addPublicConfig({id:'application.pages.page2.active', value:'true'});
-                    runner.run();
-                });
+                it('and pages are enabled then this is reflected on the root scope', function () {
+                    binarta.application.gateway.addPublicConfig({id: 'application.pages.page1.active', value: 'true'});
+                    binarta.application.gateway.addPublicConfig({id: 'application.pages.page2.active', value: 'true'});
 
-                it('they are also active on rootScope', function () {
+                    runner.execute();
+                    $rootScope.$digest();
+
                     expect($rootScope.application.pages).toEqual({
                         page1: {
                             name: 'page1',
@@ -164,7 +174,7 @@ describe('application.pages', function () {
                             priority: 0,
                             active: false,
                             translation: 'page1'
-                        },{
+                        }, {
                             name: 'page2',
                             priority: 1,
                             active: false,
@@ -176,7 +186,7 @@ describe('application.pages', function () {
                             priority: 0,
                             active: false,
                             translation: 'page1'
-                        },{
+                        }, {
                             name: 'page2',
                             priority: 1,
                             active: false,
@@ -197,7 +207,7 @@ describe('application.pages', function () {
                             priority: 0,
                             active: false,
                             translation: 'translation'
-                        },{
+                        }, {
                             name: 'page2',
                             priority: 1,
                             active: false,
@@ -209,7 +219,7 @@ describe('application.pages', function () {
                             priority: 0,
                             active: false,
                             translation: 'translation'
-                        },{
+                        }, {
                             name: 'page2',
                             priority: 1,
                             active: false,
@@ -280,7 +290,10 @@ describe('application.pages', function () {
                                     });
 
                                     it('i18n.updated notification is fired', function () {
-                                        expect(dispatcher.fire).toHaveBeenCalledWith('i18n.updated', { code : 'navigation.label.page1', translation : 'updated' });
+                                        expect(dispatcher.fire).toHaveBeenCalledWith('i18n.updated', {
+                                            code: 'navigation.label.page1',
+                                            translation: 'updated'
+                                        });
                                     });
 
                                     it('editModeRenderer is closed', function () {
