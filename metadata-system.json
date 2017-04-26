@@ -9,9 +9,9 @@
       "application.pages.add.page": "Add page",
       "application.pages.error": "Something went wrong. Please try again."
     }, "fr":{
-      "application.pages.add.section": "Add section",
-      "application.pages.add.page": "Add page",
-      "application.pages.error": "Something went wrong. Please try again."
+      "application.pages.add.section": "Ajouter une section",
+      "application.pages.add.page": "Ajouter une page",
+      "application.pages.error": "Quelque chose a mal tourné. Veuillez réessayer."
     }, "de":{
       "application.pages.add.section": "Add section",
       "application.pages.add.page": "Add page",
