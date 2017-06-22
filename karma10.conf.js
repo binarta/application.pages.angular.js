@@ -12,10 +12,11 @@ module.exports = function(config) {
             {pattern:'bower_components/binartajs-angular1/src/binarta-application-angular.js'},
             {pattern:'bower_components/binartajs-angular1/src/binarta-application-inmem-angular.js'},
             {pattern:'bower_components/binarta.web.storage.angular/src/web.storage.js'},
+            {pattern:'bower_components/binarta.web.storage/src/web.storage.js'},
             {pattern:'bower_components/angular-mocks/angular-mocks.js'},
             {pattern:'src/**/*.js'},
             {pattern:'test/**/*.js'}
         ],
-        browsers:['Chrome']
+        browsers:['PhantomJS']
     });
 };

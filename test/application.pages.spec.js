@@ -111,6 +111,38 @@ describe('application.pages', function () {
         });
     });
 
+    describe('binPages service', function () {
+        var $rootScope, sut;
+
+        beforeEach(inject(function (_$rootScope_, binPages) {
+            $rootScope = _$rootScope_;
+            sut = binPages;
+        }));
+
+        describe('with pages installed on rootScope', function () {
+            beforeEach(function () {
+                $rootScope.application = {
+                    pages: {
+                        page1: {active: false},
+                        page2: {active: true}
+                    }
+                };
+            });
+
+            it('check non existing page', function () {
+                expect(sut.isActive('non-existing')).toBeFalsy();
+            });
+
+            it('check disabled page', function () {
+                expect(sut.isActive('page1')).toBeFalsy();
+            });
+
+            it('check enabled page', function () {
+                expect(sut.isActive('page2')).toBeTruthy();
+            });
+        });
+    });
+
     describe('applicationPageController', function () {
         var ctrl, i18nResolveDeferred, i18nTranslateDeferred;
 

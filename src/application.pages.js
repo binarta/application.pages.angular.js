@@ -2,6 +2,7 @@
     'use strict';
     angular.module('application.pages', ['binarta-applicationjs-angular1', 'config', 'toggle.edit.mode', 'i18n', 'notifications'])
         .service('applicationPageInitialiser', ['binartaIsInitialised', '$rootScope', 'config', ApplicationPageInitialiser])
+        .service('binPages', ['$rootScope', BinPagesService])
         .controller('applicationPageController', ['$rootScope', '$q', 'editModeRenderer', 'configWriter', 'i18n', 'topicMessageDispatcher', ApplicationPageController])
         .run(['applicationPageInitialiser', function (initialiser) {
             initialiser.execute();
@@ -25,6 +26,13 @@
                     });
                 }
             });
+        };
+    }
+
+    function BinPagesService($rootScope) {
+        this.isActive = function (page) {
+            var app = $rootScope.application;
+            return app && app.pages && app.pages[page] && app.pages[page].active;
         };
     }
 
