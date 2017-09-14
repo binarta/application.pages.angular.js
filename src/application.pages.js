@@ -19,9 +19,12 @@
         });
 
         self.pages.forEach(function (page) {
-            binarta.application.config.observePublic('application.pages.' + page.id + '.active', function(value) {
-                updatePageStatus(page, value);
-            });
+            if (isHomePage(page)) updatePageStatus(page, 'true');
+            else {
+                binarta.application.config.observePublic('application.pages.' + page.id + '.active', function(value) {
+                    updatePageStatus(page, value);
+                });
+            }
         });
 
         function initPagesOnRootScope() {
