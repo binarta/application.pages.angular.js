@@ -139,21 +139,6 @@ describe('application.pages', function () {
             i18n.resolve.and.returnValue(i18nResolveDeferred.promise);
             i18n.translate.and.returnValue(i18nTranslateDeferred.promise);
 
-            $rootScope.application = {
-                pages: {
-                    page1: {
-                        name: 'page1',
-                        priority: 0,
-                        active: false
-                    },
-                    page2: {
-                        name: 'page2',
-                        priority: 1,
-                        active: false
-                    }
-                }
-            };
-
             ctrl = $controller('applicationPageController');
         }));
 
@@ -164,7 +149,7 @@ describe('application.pages', function () {
 
             it('editModeRenderer is opened', function () {
                 expect(editModeRenderer.open).toHaveBeenCalledWith({
-                    template: jasmine.any(String),
+                    templateUrl: 'bin-pages-edit.html',
                     scope: jasmine.any(Object)
                 });
             });
@@ -177,7 +162,7 @@ describe('application.pages', function () {
                 });
 
                 it('resolve page translations', function () {
-                    expect(i18n.resolve.calls.first().args[0]).toEqual({code: 'navigation.label.page1'});
+                    expect(i18n.resolve.calls.first().args[0]).toEqual({code: 'navigation.label.home'});
                     expect(i18n.resolve.calls.mostRecent().args[0]).toEqual({code: 'navigation.label.page2'});
                 });
 
@@ -189,25 +174,43 @@ describe('application.pages', function () {
 
                     it('pages are available with default names', function () {
                         expect(scope.pages.before).toEqual([{
-                            name: 'page1',
+                            id: 'home',
+                            name: 'home',
                             priority: 0,
+                            active: true,
+                            translation: 'home'
+                        }, {
+                            id: 'page1',
+                            name: 'page1',
+                            priority: 1,
                             active: false,
                             translation: 'page1'
                         }, {
+                            id: 'page2',
                             name: 'page2',
-                            priority: 1,
+                            customProp: 'prop',
+                            priority: 2,
                             active: false,
                             translation: 'page2'
                         }]);
 
                         expect(scope.pages.after).toEqual([{
-                            name: 'page1',
+                            id: 'home',
+                            name: 'home',
                             priority: 0,
+                            active: true,
+                            translation: 'home'
+                        }, {
+                            id: 'page1',
+                            name: 'page1',
+                            priority: 1,
                             active: false,
                             translation: 'page1'
                         }, {
+                            id: 'page2',
                             name: 'page2',
-                            priority: 1,
+                            customProp: 'prop',
+                            priority: 2,
                             active: false,
                             translation: 'page2'
                         }]);
@@ -222,34 +225,52 @@ describe('application.pages', function () {
 
                     it('pages are available', function () {
                         expect(scope.pages.before).toEqual([{
-                            name: 'page1',
+                            name: 'home',
+                            id: 'home',
                             priority: 0,
+                            active: true,
+                            translation: 'translation'
+                        }, {
+                            name: 'page1',
+                            id: 'page1',
+                            priority: 1,
                             active: false,
                             translation: 'translation'
                         }, {
                             name: 'page2',
-                            priority: 1,
+                            id: 'page2',
+                            customProp: 'prop',
+                            priority: 2,
                             active: false,
                             translation: 'translation'
                         }]);
 
                         expect(scope.pages.after).toEqual([{
-                            name: 'page1',
+                            name: 'home',
+                            id: 'home',
                             priority: 0,
+                            active: true,
+                            translation: 'translation'
+                        }, {
+                            name: 'page1',
+                            id: 'page1',
+                            priority: 1,
                             active: false,
                             translation: 'translation'
                         }, {
                             name: 'page2',
-                            priority: 1,
+                            id: 'page2',
+                            customProp: 'prop',
+                            priority: 2,
                             active: false,
                             translation: 'translation'
                         }]);
                     });
 
                     it('changes on pages should not affect before state', function () {
-                        scope.pages.after[0].active = true;
+                        scope.pages.after[1].active = true;
 
-                        expect(scope.pages.before[0].active).toBeFalsy();
+                        expect(scope.pages.before[1].active).toBeFalsy();
                     });
 
                     describe('on save', function () {
@@ -271,8 +292,7 @@ describe('application.pages', function () {
 
                         describe('with changes', function () {
                             beforeEach(function () {
-                                scope.pages.after[0].active = true;
-                                scope.pages.after[0].translation = 'updated';
+                                scope.pages.after[1].active = true;
                                 scope.pages.after[1].translation = 'updated';
 
                                 scope.save();
@@ -304,10 +324,6 @@ describe('application.pages', function () {
                                         scope.$digest();
                                     });
 
-                                    it('value on rootScope is updated', function () {
-                                        expect($rootScope.application.pages.page1.active).toBeTruthy();
-                                    });
-
                                     it('i18n.updated notification is fired', function () {
                                         expect(dispatcher.fire).toHaveBeenCalledWith('i18n.updated', {
                                             code: 'navigation.label.page1',
@@ -319,7 +335,6 @@ describe('application.pages', function () {
                                         expect(editModeRenderer.close).toHaveBeenCalled();
                                     });
                                 });
-
                             });
                         });
                     });

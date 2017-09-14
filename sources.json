@@ -1,5 +1,6 @@
 {
   "default": {
-    "application.pages":"bower_components/binarta.application.pages.angular/src/application.pages.js"
+    "application.pages":"bower_components/binarta.application.pages.angular/src/application.pages.js",
+    "application.pages.templates":"bower_components/binarta.application.pages.angular/src/application.pages-tpls-bootstrap3.js"
   }
 }
