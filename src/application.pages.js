@@ -1,39 +1,66 @@
 (function () {
     'use strict';
     angular.module('application.pages', ['binarta-applicationjs-angular1', 'config', 'toggle.edit.mode', 'i18n', 'notifications'])
-        .service('applicationPageInitialiser', ['binarta', '$rootScope', 'config', ApplicationPageInitialiser])
-        .service('binPages', ['$rootScope', BinPagesService])
+        .service('binPages', ['$rootScope', 'binarta', 'config', BinPagesService])
         .controller('applicationPageController', ['$rootScope', '$q', 'editModeRenderer', 'configWriter', 'i18n', 'topicMessageDispatcher', ApplicationPageController])
-        .run(['applicationPageInitialiser', function (initialiser) {
-            initialiser.execute();
-        }]);
+        .run(['binPages', function () {}]);
 
-    function ApplicationPageInitialiser(binarta, $rootScope, config) {
-        this.execute = function () {
-            binarta.schedule(function () {
-                $rootScope.application = $rootScope.application || {};
-                $rootScope.application.pages = {};
+    function BinPagesService($rootScope, binarta, config) {
+        var self = this;
+        self.pages = [];
+        initPagesOnRootScope();
+        if (config.application && config.application.pages) config.application.pages.forEach(function (page) {
+            var priority = config.application.pages.indexOf(page);
+            if (typeof page  !== 'object') page = {id: page};
+            page.name = page.id;
+            page.priority = priority;
+            self.pages.push(page);
+            pushPageOnRootScope(page);
+        });
 
-                if (config.application && config.application.pages) {
-                    config.application.pages.forEach(function (page) {
-                        var priority = config.application.pages.indexOf(page);
-                        if (typeof page  !== 'object') page = {id: page};
-                        binarta.application.config.findPublic('application.pages.' + page.id + '.active', function(value) {
-                            page.name = page.id;
-                            page.priority = priority;
-                            page.active = value === 'true';
-                            $rootScope.application.pages[page.id] = page;
-                        });
-                    });
-                }
+        self.pages.forEach(function (page) {
+            binarta.application.config.observePublic('application.pages.' + page.id + '.active', function(value) {
+                updatePageStatus(page, value);
             });
-        };
-    }
+        });
 
-    function BinPagesService($rootScope) {
-        this.isActive = function (page) {
-            var app = $rootScope.application;
-            return app && app.pages && app.pages[page] && app.pages[page].active;
+        function initPagesOnRootScope() {
+            $rootScope.application = $rootScope.application || {};
+            $rootScope.application.pages = {};
+        }
+
+        function pushPageOnRootScope(page) {
+            $rootScope.application.pages[page.id] = page;
+        }
+
+        function updatePageStatusOnRootScope(page, status) {
+            $rootScope.application.pages[page.id].active = isPageStatusActive(page, status);
+        }
+
+        function isHomePage(page) {
+            return page.id === 'home';
+        }
+
+        function updatePageStatus(page, status) {
+            self.pages.forEach(function (p) {
+                if (p.id === page.id) p.active = isPageStatusActive(page, status);
+            });
+            updatePageStatusOnRootScope(page, status);
+        }
+
+        function isPageStatusActive(page, status) {
+            return isHomePage(page) ? true : (status === 'true');
+        }
+
+        this.isActive = function (id) {
+            var isActive = false;
+            for(var i = 0; i < self.pages.length; i++) {
+                if (self.pages[i].id === id && self.pages[i].active) {
+                    isActive = true;
+                    break;
+                }
+            }
+            return isActive;
         };
     }
 
@@ -107,8 +134,8 @@
                 var promises = [];
 
                 for (var i = 0; i < after.length; i++) {
-                    if (before[i].active != after[i].active) promises.push(updateConfig(after[i]));
-                    if (after[i].active && before[i].translation != after[i].translation) promises.push(updateTranslation(after[i]));
+                    if (before[i].active !== after[i].active) promises.push(updateConfig(after[i]));
+                    if (after[i].active && before[i].translation !== after[i].translation) promises.push(updateTranslation(after[i]));
                 }
 
                 $q.all(promises).then(function () {

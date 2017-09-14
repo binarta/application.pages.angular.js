@@ -1,9 +1,17 @@
 describe('application.pages', function () {
-    var binarta, $rootScope, $q, runner, config, configReaderDeferred, configWriterDeferred, configReader, configWriter,
+    var binarta, $rootScope, config, configReaderDeferred, configWriterDeferred, configReader, configWriter,
         editModeRenderer, i18n, dispatcher;
 
     angular.module('config', [])
-        .value('config', {})
+        .value('config', {
+            application: {
+                pages: [
+                    {id: 'home'},
+                    'page1',
+                    {id: 'page2', customProp: 'prop'}
+                ]
+            }
+        })
         .factory('configReader', ['$q', function ($q) {
             configReaderDeferred = $q.defer();
             return jasmine.createSpy('configReader').and.returnValue(configReaderDeferred.promise);
@@ -30,11 +38,10 @@ describe('application.pages', function () {
 
     beforeEach(module('application.pages'));
 
-    beforeEach(inject(function (_binarta_, _$rootScope_, applicationPageInitialiser, _config_, _configReader_, _configWriter_,
+    beforeEach(inject(function (_binarta_, _$rootScope_, _config_, _configReader_, _configWriter_,
                                 _editModeRenderer_, _i18n_, topicMessageDispatcher) {
         binarta = _binarta_;
         $rootScope = _$rootScope_;
-        runner = applicationPageInitialiser;
         config = _config_;
         configReader = _configReader_;
         configWriter = _configWriter_;
@@ -42,135 +49,6 @@ describe('application.pages', function () {
         i18n = _i18n_;
         dispatcher = topicMessageDispatcher;
     }));
-
-    function triggerBinartaSchedule() {
-        binarta.application.adhesiveReading.read('-');
-    }
-
-    describe('ApplicationPagesInitialiser', function () {
-        it('execute waits for binarta to be initialised', function() {
-            runner.execute();
-            $rootScope.$digest();
-            expect($rootScope.application).toBeUndefined();
-        });
-
-        describe('given binarta is initialised', function() {
-            beforeEach(function() {
-                binarta.application.gateway.clear();
-                triggerBinartaSchedule();
-            });
-
-            it('and nothing is defined in config then execute does nothing', function () {
-                runner.execute();
-                $rootScope.$digest();
-                expect($rootScope.application.pages).toEqual({});
-            });
-
-            describe('and pages are defined in config', function () {
-                beforeEach(function () {
-                    config.application = {
-                        pages: ['page1', 'page2']
-                    };
-                });
-
-                it('and pages are not enabled then this is reflected on the root scope', function () {
-                    runner.execute();
-                    $rootScope.$digest();
-                    expect($rootScope.application.pages).toEqual({
-                        page1: {
-                            name: 'page1',
-                            id: 'page1',
-                            priority: 0,
-                            active: false
-                        },
-                        page2: {
-                            name: 'page2',
-                            id: 'page2',
-                            priority: 1,
-                            active: false
-                        }
-                    });
-                });
-
-                it('and pages are enabled then this is reflected on the root scope', function () {
-                    binarta.application.gateway.addPublicConfig({id: 'application.pages.page1.active', value: 'true'});
-                    binarta.application.gateway.addPublicConfig({id: 'application.pages.page2.active', value: 'true'});
-
-                    runner.execute();
-                    $rootScope.$digest();
-
-                    expect($rootScope.application.pages).toEqual({
-                        page1: {
-                            name: 'page1',
-                            id: 'page1',
-                            priority: 0,
-                            active: true
-                        },
-                        page2: {
-                            name: 'page2',
-                            id: 'page2',
-                            priority: 1,
-                            active: true
-                        }
-                    });
-                });
-            });
-
-            describe('and page-objects are defined in config', function () {
-                beforeEach(function () {
-                    config.application = {
-                        pages: [{id: 'page1', customProp: '1'}, {id: 'page2', customProp: '2'}]
-                    };
-                });
-
-                it('and pages are not enabled then this is reflected on the root scope', function () {
-                    runner.execute();
-                    $rootScope.$digest();
-                    expect($rootScope.application.pages).toEqual({
-                        page1: {
-                            name: 'page1',
-                            id: 'page1',
-                            customProp: '1',
-                            priority: 0,
-                            active: false
-                        },
-                        page2: {
-                            name: 'page2',
-                            id: 'page2',
-                            customProp: '2',
-                            priority: 1,
-                            active: false
-                        }
-                    });
-                });
-
-                it('and pages are enabled then this is reflected on the root scope', function () {
-                    binarta.application.gateway.addPublicConfig({id: 'application.pages.page1.active', value: 'true'});
-                    binarta.application.gateway.addPublicConfig({id: 'application.pages.page2.active', value: 'true'});
-
-                    runner.execute();
-                    $rootScope.$digest();
-
-                    expect($rootScope.application.pages).toEqual({
-                        page1: {
-                            name: 'page1',
-                            id: 'page1',
-                            customProp: '1',
-                            priority: 0,
-                            active: true
-                        },
-                        page2: {
-                            name: 'page2',
-                            id: 'page2',
-                            customProp: '2',
-                            priority: 1,
-                            active: true
-                        }
-                    });
-                });
-            });
-        });
-    });
 
     describe('binPages service', function () {
         var $rootScope, sut;
@@ -180,26 +58,74 @@ describe('application.pages', function () {
             sut = binPages;
         }));
 
-        describe('with pages installed on rootScope', function () {
+        it('pages are available, homepage is always active', function () {
+            expect(sut.pages).toEqual([{
+                id: 'home',
+                name: 'home',
+                priority: 0,
+                active: true
+            }, {
+                id: 'page1',
+                name: 'page1',
+                priority: 1,
+                active: false
+            }, {
+                id: 'page2',
+                customProp: 'prop',
+                name: 'page2',
+                priority: 2,
+                active: false
+            }]);
+        });
+
+        it('homepage is always active', function () {
+            expect(sut.isActive('home')).toBeTruthy();
+        });
+
+        it('assert inactive page', function () {
+            expect(sut.isActive('page1')).toBeFalsy();
+        });
+
+        it('pages are also available on rootScope', function () {
+            expect($rootScope.application.pages).toEqual({
+                home: {
+                    id: 'home',
+                    name: 'home',
+                    priority: 0,
+                    active: true
+                },
+                page1: {
+                    id: 'page1',
+                    name: 'page1',
+                    priority: 1,
+                    active: false
+                },
+                page2: {
+                    id: 'page2',
+                    customProp: 'prop',
+                    name: 'page2',
+                    priority: 2,
+                    active: false
+                }
+            });
+        });
+
+        describe('on config update', function () {
             beforeEach(function () {
-                $rootScope.application = {
-                    pages: {
-                        page1: {active: false},
-                        page2: {active: true}
-                    }
-                };
+                binarta.application.config.cache('application.pages.page1.active', 'true');
             });
 
-            it('check non existing page', function () {
-                expect(sut.isActive('non-existing')).toBeFalsy();
+            it('page is updated', function () {
+                expect(sut.pages[1].id).toEqual('page1');
+                expect(sut.pages[1].active).toBeTruthy();
             });
 
-            it('check disabled page', function () {
-                expect(sut.isActive('page1')).toBeFalsy();
+            it('page is also updated on rootScope', function () {
+                expect($rootScope.application.pages.page1.active).toBeTruthy();
             });
 
-            it('check enabled page', function () {
-                expect(sut.isActive('page2')).toBeTruthy();
+            it('page is active', function () {
+                expect(sut.isActive('page1')).toBeTruthy();
             });
         });
     });
