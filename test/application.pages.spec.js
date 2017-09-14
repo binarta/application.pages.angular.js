@@ -43,6 +43,10 @@ describe('application.pages', function () {
         dispatcher = topicMessageDispatcher;
     }));
 
+    function triggerBinartaSchedule() {
+        binarta.application.adhesiveReading.read('-');
+    }
+
     describe('ApplicationPagesInitialiser', function () {
         it('execute waits for binarta to be initialised', function() {
             runner.execute();
@@ -51,11 +55,10 @@ describe('application.pages', function () {
         });
 
         describe('given binarta is initialised', function() {
-            beforeEach(inject(function(binartaGatewaysAreInitialised, binartaConfigIsInitialised, binartaCachesAreInitialised) {
-                binartaGatewaysAreInitialised.resolve();
-                binartaConfigIsInitialised.resolve();
-                binartaCachesAreInitialised.resolve();
-            }));
+            beforeEach(function() {
+                binarta.application.gateway.clear();
+                triggerBinartaSchedule();
+            });
 
             it('and nothing is defined in config then execute does nothing', function () {
                 runner.execute();
@@ -76,11 +79,13 @@ describe('application.pages', function () {
                     expect($rootScope.application.pages).toEqual({
                         page1: {
                             name: 'page1',
+                            id: 'page1',
                             priority: 0,
                             active: false
                         },
                         page2: {
                             name: 'page2',
+                            id: 'page2',
                             priority: 1,
                             active: false
                         }
@@ -97,11 +102,67 @@ describe('application.pages', function () {
                     expect($rootScope.application.pages).toEqual({
                         page1: {
                             name: 'page1',
+                            id: 'page1',
                             priority: 0,
                             active: true
                         },
                         page2: {
                             name: 'page2',
+                            id: 'page2',
+                            priority: 1,
+                            active: true
+                        }
+                    });
+                });
+            });
+
+            describe('and page-objects are defined in config', function () {
+                beforeEach(function () {
+                    config.application = {
+                        pages: [{id: 'page1', customProp: '1'}, {id: 'page2', customProp: '2'}]
+                    };
+                });
+
+                it('and pages are not enabled then this is reflected on the root scope', function () {
+                    runner.execute();
+                    $rootScope.$digest();
+                    expect($rootScope.application.pages).toEqual({
+                        page1: {
+                            name: 'page1',
+                            id: 'page1',
+                            customProp: '1',
+                            priority: 0,
+                            active: false
+                        },
+                        page2: {
+                            name: 'page2',
+                            id: 'page2',
+                            customProp: '2',
+                            priority: 1,
+                            active: false
+                        }
+                    });
+                });
+
+                it('and pages are enabled then this is reflected on the root scope', function () {
+                    binarta.application.gateway.addPublicConfig({id: 'application.pages.page1.active', value: 'true'});
+                    binarta.application.gateway.addPublicConfig({id: 'application.pages.page2.active', value: 'true'});
+
+                    runner.execute();
+                    $rootScope.$digest();
+
+                    expect($rootScope.application.pages).toEqual({
+                        page1: {
+                            name: 'page1',
+                            id: 'page1',
+                            customProp: '1',
+                            priority: 0,
+                            active: true
+                        },
+                        page2: {
+                            name: 'page2',
+                            id: 'page2',
+                            customProp: '2',
                             priority: 1,
                             active: true
                         }

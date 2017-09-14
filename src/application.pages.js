@@ -1,27 +1,28 @@
 (function () {
     'use strict';
     angular.module('application.pages', ['binarta-applicationjs-angular1', 'config', 'toggle.edit.mode', 'i18n', 'notifications'])
-        .service('applicationPageInitialiser', ['binartaIsInitialised', '$rootScope', 'config', ApplicationPageInitialiser])
+        .service('applicationPageInitialiser', ['binarta', '$rootScope', 'config', ApplicationPageInitialiser])
         .service('binPages', ['$rootScope', BinPagesService])
         .controller('applicationPageController', ['$rootScope', '$q', 'editModeRenderer', 'configWriter', 'i18n', 'topicMessageDispatcher', ApplicationPageController])
         .run(['applicationPageInitialiser', function (initialiser) {
             initialiser.execute();
         }]);
 
-    function ApplicationPageInitialiser(binartaIsInitialised, $rootScope, config) {
+    function ApplicationPageInitialiser(binarta, $rootScope, config) {
         this.execute = function () {
-            binartaIsInitialised.then(function(binarta) {
+            binarta.schedule(function () {
                 $rootScope.application = $rootScope.application || {};
                 $rootScope.application.pages = {};
 
                 if (config.application && config.application.pages) {
-                    config.application.pages.forEach(function (name) {
-                        binarta.application.config.findPublic('application.pages.' + name + '.active', function(value) {
-                            $rootScope.application.pages[name] = {
-                                name: name,
-                                priority: config.application.pages.indexOf(name),
-                                active: value == 'true'
-                            };
+                    config.application.pages.forEach(function (page) {
+                        var priority = config.application.pages.indexOf(page);
+                        if (typeof page  !== 'object') page = {id: page};
+                        binarta.application.config.findPublic('application.pages.' + page.id + '.active', function(value) {
+                            page.name = page.id;
+                            page.priority = priority;
+                            page.active = value === 'true';
+                            $rootScope.application.pages[page.id] = page;
                         });
                     });
                 }
