@@ -1,11 +1,13 @@
 (function () {
     'use strict';
     angular.module('application.pages', ['binarta-applicationjs-angular1', 'config', 'toggle.edit.mode', 'i18n', 'notifications'])
-        .service('binPages', ['$rootScope', 'binarta', 'config', BinPagesService])
-        .controller('applicationPageController', ['$rootScope', 'binPages', '$q', 'editModeRenderer', 'configWriter', 'i18n', 'topicMessageDispatcher', ApplicationPageController])
+        .service('binPages', ['$rootScope', '$q', 'binarta', 'config', 'editModeRenderer', 'configWriter', 'i18n', 'topicMessageDispatcher', BinPagesService])
+        .controller('applicationPageController', ['binPages', ApplicationPageController])
         .run(['binPages', function () {}]);
 
-    function BinPagesService($rootScope, binarta, config) {
+    var i18nNavPrefix = 'navigation.label.';
+
+    function BinPagesService($rootScope, $q, binarta, config, renderer, writer, i18n, dispatcher) {
         var self = this;
         self.pages = [];
         initPagesOnRootScope();
@@ -65,12 +67,8 @@
             }
             return isActive;
         };
-    }
 
-    function ApplicationPageController($rootScope, binPages, $q, renderer, writer, i18n, dispatcher) {
-        var i18nNavPrefix = 'navigation.label.';
-
-        this.open = function () {
+        this.editPages = function () {
             var rendererScope = $rootScope.$new();
 
             rendererScope.pages = {
@@ -78,7 +76,7 @@
                 after: []
             };
 
-            binPages.pages.forEach(function (page) {
+            self.pages.forEach(function (page) {
                 i18n.resolve({
                     code: i18nNavPrefix + page.name
                 }).then(function (translation) {
@@ -140,6 +138,10 @@
                     });
                 });
             }
-        }
+        };
+    }
+
+    function ApplicationPageController(binPages) {
+        this.open = binPages.editPages;
     }
 })();
