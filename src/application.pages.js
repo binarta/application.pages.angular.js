@@ -69,7 +69,7 @@
             scope.lang = binarta.application.localeForPresentation();
             scope.page = angular.copy(page);
             scope.allowTogglePageVisibility = !isHomePage(scope.page);
-            scope.isNavigatable = scope.page.path && scope.page.path !== binarta.application.unlocalizedPath();
+            scope.isNavigatable = page.path && page.active && page.path !== binarta.application.unlocalizedPath();
 
             i18n.resolve({code: i18nNavPrefix + scope.page.id}).then(function (t) {
                 page.translation = t;

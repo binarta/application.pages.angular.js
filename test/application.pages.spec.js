@@ -196,8 +196,8 @@ describe('application.pages', function () {
                     expect(scope.allowTogglePageVisibility).toBeTruthy();
                 });
 
-                it('possible to navigate to the page', function () {
-                    expect(scope.isNavigatable).toBeTruthy();
+                it('not possible to navigate to the page because it is not active', function () {
+                    expect(scope.isNavigatable).toBeFalsy();
                 });
 
                 describe('when title name is resolved', function () {
