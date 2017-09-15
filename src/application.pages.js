@@ -1,13 +1,14 @@
 (function () {
     'use strict';
     angular.module('application.pages', ['binarta-applicationjs-angular1', 'config', 'toggle.edit.mode', 'i18n', 'notifications'])
-        .service('binPages', ['$rootScope', '$q', 'binarta', 'config', 'editModeRenderer', 'configWriter', 'i18n', 'topicMessageDispatcher', BinPagesService])
+        .service('binPages', ['$rootScope', '$q', 'binarta', 'config', 'editModeRenderer', 'configWriter', 'i18n', 'i18nLocation', 'topicMessageDispatcher', BinPagesService])
+        .component('binPageName', new BinPageNameComponent())
         .controller('applicationPageController', ['binPages', ApplicationPageController])
         .run(['binPages', function () {}]);
 
     var i18nNavPrefix = 'navigation.label.';
 
-    function BinPagesService($rootScope, $q, binarta, config, renderer, writer, i18n, dispatcher) {
+    function BinPagesService($rootScope, $q, binarta, config, renderer, writer, i18n, location, dispatcher) {
         var self = this;
         self.pages = [];
         initPagesOnRootScope();
@@ -47,15 +48,64 @@
             $rootScope.application.pages[page.id].active = status;
         }
 
-        this.isActive = function (id) {
-            var isActive = false;
+        function findPageById(id) {
+            var page;
             for(var i = 0; i < self.pages.length; i++) {
-                if (self.pages[i].id === id && self.pages[i].active) {
-                    isActive = true;
+                if (self.pages[i].id === id) {
+                    page = self.pages[i];
                     break;
                 }
             }
-            return isActive;
+            return page;
+        }
+
+        this.isActive = function (id) {
+            return findPageById(id).active;
+        };
+
+        this.editPage = function (id) {
+            var scope = $rootScope.$new();
+            var page = findPageById(id);
+            scope.lang = binarta.application.localeForPresentation();
+            scope.page = angular.copy(page);
+            scope.allowTogglePageVisibility = !isHomePage(scope.page);
+            scope.isNavigatable = scope.page.path && scope.page.path !== binarta.application.unlocalizedPath();
+
+            i18n.resolve({code: i18nNavPrefix + scope.page.id}).then(function (t) {
+                page.translation = t;
+                scope.page.translation = t;
+            });
+
+            scope.goToPage = function () {
+                location.path(scope.page.path);
+                scope.close();
+            };
+
+            scope.submit = function () {
+                var promises = [];
+                scope.violations = [];
+                if (page.active !== scope.page.active) promises.push(writePageStatus(scope.page, scope));
+                if (page.translation !== scope.page.translation) promises.push(writePageName(scope.page));
+
+                if (promises.length > 0) {
+                    scope.working = true;
+                    $q.all(promises).then(function () {
+                        scope.close();
+                    }, function () {
+                        scope.violations = ['error'];
+                        scope.working = false;
+                    });
+                } else scope.close();
+            };
+
+            scope.close = function () {
+                renderer.close();
+            };
+
+            renderer.open({
+                templateUrl: 'bin-page-edit.html',
+                scope: scope
+            });
         };
 
         this.editPages = function () {
@@ -91,8 +141,8 @@
                 var promises = [];
 
                 for (var i = 0; i < after.length; i++) {
-                    if (before[i].active !== after[i].active) promises.push(updateConfig(after[i]));
-                    if (after[i].active && before[i].translation !== after[i].translation) promises.push(updateTranslation(after[i]));
+                    if (before[i].active !== after[i].active) promises.push(writePageStatus(after[i], rendererScope));
+                    if (after[i].active && before[i].translation !== after[i].translation) promises.push(writePageName(after[i]));
                 }
 
                 $q.all(promises).then(function () {
@@ -108,27 +158,59 @@
                 scope: rendererScope
             });
 
-            function updateConfig(page) {
-                return writer({
-                    $scope: rendererScope,
-                    scope: 'public',
-                    key: 'application.pages.' + page.name + '.active',
-                    value: page.active
-                });
-            }
+        };
 
-            function updateTranslation(page) {
-                return i18n.translate({
+        function writePageStatus(page, scope) {
+            return writer({
+                $scope: scope,
+                scope: 'public',
+                key: 'application.pages.' + page.name + '.active',
+                value: page.active
+            });
+        }
+
+        function writePageName(page) {
+            return i18n.translate({
+                code: i18nNavPrefix + page.name,
+                translation: page.translation
+            }).then(function () {
+                dispatcher.fire('i18n.updated', {
                     code: i18nNavPrefix + page.name,
                     translation: page.translation
-                }).then(function () {
-                    dispatcher.fire('i18n.updated', {
-                        code: i18nNavPrefix + page.name,
-                        translation: page.translation
-                    });
                 });
-            }
+            });
+        }
+    }
+
+    function BinPageNameComponent() {
+        this.template = '<span ng-bind="$ctrl.name"></span>';
+
+        this.bindings = {
+            id: '@pageId'
         };
+
+        this.controller = ['$scope', '$element', 'i18n', 'editMode', 'binPages', function ($scope, $element, i18n, editMode, binPages) {
+            var $ctrl = this;
+
+            $ctrl.$onInit = function () {
+                var observer = i18n.observe(i18nNavPrefix + $ctrl.id, function (t) {
+                    $ctrl.name = t;
+                });
+
+                editMode.bindEvent({
+                    scope: $scope,
+                    element: $element,
+                    permission: 'edit.mode',
+                    onClick: function () {
+                        binPages.editPage($ctrl.id);
+                    }
+                });
+
+                $ctrl.$onDestroy = function () {
+                    observer.disconnect();
+                };
+            };
+        }];
     }
 
     function ApplicationPageController(binPages) {

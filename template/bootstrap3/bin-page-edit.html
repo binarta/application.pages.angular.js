@@ -1,0 +1,43 @@
+<form name="form" ng-submit="submit()">
+    <div class="bin-menu-edit-body">
+        <bin-violations src="violations" fade-after="7000" code-prefix="application.pages"></bin-violations>
+
+        <div class="form-group" ng-if="::allowTogglePageVisibility">
+            <table>
+                <tr>
+                    <td>
+                        <div class="checkbox-switch">
+                            <input type="checkbox" id="bin-page-input-active" ng-model="page.active">
+                            <label for="bin-page-input-active"></label>
+                        </div>
+                    </td>
+                    <td style="padding-left: 15px;"
+                        i18n code="application.pages.toggle.visibility" read-only ng-bind="::var">
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="form-group">
+            <div class="input-group">
+                <input type="text" id="bin-page-input-name" class="form-control" name="name"
+                       ng-model="page.translation" required>
+                <div class="input-group-addon">
+                    <i class="fa fa-globe fa-fw"></i>
+                    <span ng-bind="::lang | toLanguageName"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="bin-menu-edit-actions">
+        <button type="button" class="btn btn-primary pull-left" ng-click="goToPage()" ng-if="isNavigatable"
+                i18n code="i18n.menu.follow.link" read-only ng-bind="::var">
+        </button>
+        <button type="submit" class="btn btn-primary" i18n code="clerk.menu.save.button" read-only ng-disabled="working">
+            <span ng-show="working"><i class="fa fa-spinner fa-spin fa-fw"></i></span>
+            <span ng-bind="::var"></span>
+        </button>
+        <button type="reset" class="btn btn-default" ng-click="close()"
+                i18n code="clerk.menu.cancel.button" read-only ng-bind="::var" ng-disabled="working"></button>
+    </div>
+</form>
