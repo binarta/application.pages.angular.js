@@ -21,10 +21,10 @@
         });
 
         self.pages.forEach(function (page) {
-            if (isHomePage(page)) updatePageStatus(page, 'true');
+            if (isHomePage(page)) updatePageStatus(page, true);
             else {
                 binarta.application.config.observePublic('application.pages.' + page.id + '.active', function(value) {
-                    updatePageStatus(page, value);
+                    updatePageStatus(page, value === 'true' || value === true);
                 });
             }
         });
@@ -38,23 +38,13 @@
             $rootScope.application.pages[page.id] = page;
         }
 
-        function updatePageStatusOnRootScope(page, status) {
-            $rootScope.application.pages[page.id].active = isPageStatusActive(page, status);
-        }
-
         function isHomePage(page) {
             return page.id === 'home';
         }
 
         function updatePageStatus(page, status) {
-            self.pages.forEach(function (p) {
-                if (p.id === page.id) p.active = isPageStatusActive(page, status);
-            });
-            updatePageStatusOnRootScope(page, status);
-        }
-
-        function isPageStatusActive(page, status) {
-            return isHomePage(page) ? true : (status === 'true');
+            page.active = status;
+            $rootScope.application.pages[page.id].active = status;
         }
 
         this.isActive = function (id) {

@@ -128,6 +128,25 @@ describe('application.pages', function () {
                 expect(sut.isActive('page1')).toBeTruthy();
             });
         });
+
+        describe('on config update with boolean', function () {
+            beforeEach(function () {
+                binarta.application.config.cache('application.pages.page1.active', true);
+            });
+
+            it('page is updated', function () {
+                expect(sut.pages[1].id).toEqual('page1');
+                expect(sut.pages[1].active).toBeTruthy();
+            });
+
+            it('page is also updated on rootScope', function () {
+                expect($rootScope.application.pages.page1.active).toBeTruthy();
+            });
+
+            it('page is active', function () {
+                expect(sut.isActive('page1')).toBeTruthy();
+            });
+        });
     });
 
     describe('applicationPageController', function () {
