@@ -215,6 +215,7 @@
     }
 
     function ApplicationPageController(binSections) {
+        //@Deprecated: use the section components instead
         this.open = binSections.editSections;
     }
 })();
