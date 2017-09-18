@@ -4,6 +4,7 @@
         .service('binPages', ['$rootScope', '$q', 'binarta', 'config', 'editModeRenderer', 'configWriter', 'i18n', 'i18nLocation', 'topicMessageDispatcher', BinSectionsService])
         .service('binSections', ['$rootScope', '$q', 'binarta', 'config', 'editModeRenderer', 'configWriter', 'i18n', 'i18nLocation', 'topicMessageDispatcher', BinSectionsService])
         .component('binSectionName', new BinSectionNameComponent())
+        .component('binSection', new BinSectionComponent())
         .controller('applicationPageController', ['binSections', ApplicationPageController])
         .run(['binSections', function () {}]);
 
@@ -11,65 +12,51 @@
 
     function BinSectionsService($rootScope, $q, binarta, config, renderer, writer, i18n, location, dispatcher) {
         var self = this;
+        var sectionsOnPage = [];
+
         self.sections = [];
-        initPagesOnRootScope();
-        if (config.application && config.application.pages) config.application.pages.forEach(function (page) {
-            var priority = config.application.pages.indexOf(page);
-            if (typeof page  !== 'object') page = {id: page};
-            page.name = page.id;
-            page.priority = priority;
-            self.sections.push(page);
-            pushPageOnRootScope(page);
+
+        initSectionsOnRootScope();
+
+        if (config.application && config.application.pages) config.application.pages.forEach(function (section) {
+            var priority = config.application.pages.indexOf(section);
+            if (typeof section  !== 'object') section = {id: section};
+            section.name = section.id;
+            section.priority = priority;
+            self.sections.push(section);
+            pushSectionOnRootScope(section);
         });
 
-        self.sections.forEach(function (page) {
-            if (isHomePage(page)) updatePageStatus(page, true);
+        self.sections.forEach(function (section) {
+            if (isHome(section)) updateSectionStatus(section, true);
             else {
-                binarta.application.config.observePublic('application.pages.' + page.id + '.active', function(value) {
-                    updatePageStatus(page, value === 'true' || value === true);
+                binarta.application.config.observePublic('application.pages.' + section.id + '.active', function(value) {
+                    updateSectionStatus(section, value === 'true' || value === true);
                 });
             }
         });
 
-        function initPagesOnRootScope() {
-            $rootScope.application = $rootScope.application || {};
-            $rootScope.application.pages = {};
-        }
+        $rootScope.$on('$routeChangeStart', function () {
+            sectionsOnPage = [];
+        });
 
-        function pushPageOnRootScope(page) {
-            $rootScope.application.pages[page.id] = page;
-        }
+        this.register = function (args) {
+            sectionsOnPage.push(args);
+            setSectionClasses();
+        };
 
-        function isHomePage(page) {
-            return page.id === 'home';
-        }
-
-        function updatePageStatus(page, status) {
-            page.active = status;
-            $rootScope.application.pages[page.id].active = status;
-        }
-
-        function findPageById(id) {
-            var page;
-            for(var i = 0; i < self.sections.length; i++) {
-                if (self.sections[i].id === id) {
-                    page = self.sections[i];
-                    break;
-                }
-            }
-            return page;
-        }
+        this.findById = findSectionById;
 
         this.isActive = function (id) {
-            return findPageById(id).active;
+            return findSectionById(id).active;
         };
 
         this.editSection = function (id) {
             var scope = $rootScope.$new();
-            var page = findPageById(id);
+            var page = findSectionById(id);
             scope.lang = binarta.application.localeForPresentation();
             scope.page = angular.copy(page);
-            scope.allowTogglePageVisibility = !isHomePage(scope.page);
+            scope.allowTogglePageVisibility = !isHome(scope.page);
             scope.isNavigatable = page.path && page.active && page.path !== binarta.application.unlocalizedPath();
 
             i18n.resolve({code: i18nNavPrefix + scope.page.id}).then(function (t) {
@@ -85,8 +72,8 @@
             scope.submit = function () {
                 var promises = [];
                 scope.violations = [];
-                if (page.active !== scope.page.active) promises.push(writePageStatus(scope.page, scope));
-                if (page.translation !== scope.page.translation) promises.push(writePageName(scope.page));
+                if (page.active !== scope.page.active) promises.push(writeSectionStatus(scope.page, scope));
+                if (page.translation !== scope.page.translation) promises.push(writeSectionName(scope.page));
 
                 if (promises.length > 0) {
                     scope.working = true;
@@ -142,8 +129,8 @@
                 var promises = [];
 
                 for (var i = 0; i < after.length; i++) {
-                    if (before[i].active !== after[i].active) promises.push(writePageStatus(after[i], rendererScope));
-                    if (after[i].active && before[i].translation !== after[i].translation) promises.push(writePageName(after[i]));
+                    if (before[i].active !== after[i].active) promises.push(writeSectionStatus(after[i], rendererScope));
+                    if (after[i].active && before[i].translation !== after[i].translation) promises.push(writeSectionName(after[i]));
                 }
 
                 $q.all(promises).then(function () {
@@ -161,23 +148,64 @@
 
         };
 
-        function writePageStatus(page, scope) {
-            return writer({
-                $scope: scope,
-                scope: 'public',
-                key: 'application.pages.' + page.name + '.active',
-                value: page.active
+        function initSectionsOnRootScope() {
+            $rootScope.application = $rootScope.application || {};
+            $rootScope.application.pages = {};
+        }
+
+        function pushSectionOnRootScope(section) {
+            $rootScope.application.pages[section.id] = section;
+        }
+
+        function isHome(section) {
+            return section.id === 'home';
+        }
+
+        function updateSectionStatus(section, status) {
+            section.active = status;
+            $rootScope.application.pages[section.id].active = status;
+            setSectionClasses();
+        }
+
+        function findSectionById(id) {
+            var page;
+            for(var i = 0; i < self.sections.length; i++) {
+                if (self.sections[i].id === id) {
+                    page = self.sections[i];
+                    break;
+                }
+            }
+            return page;
+        }
+
+        function setSectionClasses() {
+            var odd = true;
+
+            sectionsOnPage.forEach(function (section) {
+                if (section.isActive()) {
+                    section.setCssClass(odd ? 'odd' : 'even');
+                    odd = !odd;
+                }
             });
         }
 
-        function writePageName(page) {
+        function writeSectionStatus(section, scope) {
+            return writer({
+                $scope: scope,
+                scope: 'public',
+                key: 'application.pages.' + section.name + '.active',
+                value: section.active
+            });
+        }
+
+        function writeSectionName(section) {
             return i18n.translate({
-                code: i18nNavPrefix + page.name,
-                translation: page.translation
+                code: i18nNavPrefix + section.name,
+                translation: section.translation
             }).then(function () {
                 dispatcher.fire('i18n.updated', {
-                    code: i18nNavPrefix + page.name,
-                    translation: page.translation
+                    code: i18nNavPrefix + section.name,
+                    translation: section.translation
                 });
             });
         }
@@ -187,7 +215,7 @@
         this.template = '<span ng-bind="$ctrl.name"></span>';
 
         this.bindings = {
-            id: '@pageId'
+            id: '@sectionId'
         };
 
         this.controller = ['$scope', '$element', 'i18n', 'editMode', 'binSections', function ($scope, $element, i18n, editMode, binSections) {
@@ -211,6 +239,41 @@
                     observer.disconnect();
                 };
             };
+        }];
+    }
+
+    function BinSectionComponent() {
+        this.template = '<section ng-class="$ctrl.cssClass" ng-if="$ctrl.isActive()" ng-transclude></section>';
+
+        this.transclude = true;
+
+        this.bindings = {
+            id: '@'
+        };
+
+        this.controller = ['binSections', function (binSections) {
+            var $ctrl = this;
+            var section;
+
+            $ctrl.$onInit = function () {
+                if ($ctrl.id) section = binSections.findById($ctrl.id);
+
+                binSections.register({
+                    isActive: isActive,
+                    setCssClass: setCssClass
+                });
+
+                $ctrl.isActive = isActive;
+            };
+
+            function isActive() {
+                if (!section) return true;
+                return section.active;
+            }
+
+            function setCssClass(c) {
+                $ctrl.cssClass = c;
+            }
         }];
     }
 

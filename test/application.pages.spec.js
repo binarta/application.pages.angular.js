@@ -7,8 +7,8 @@ describe('application.pages', function () {
             application: {
                 pages: [
                     {id: 'home'},
-                    'page1',
-                    {id: 'page2', customProp: 'prop', path: '/page2'}
+                    'section1',
+                    {id: 'section2', customProp: 'prop', path: '/section2'}
                 ]
             }
         })
@@ -54,29 +54,29 @@ describe('application.pages', function () {
         i18nLocation = _i18nLocation_;
     }));
 
-    describe('binPages service', function () {
-        var $rootScope, sut, homepage, page1, page2;
+    describe('binSections service', function () {
+        var $rootScope, sut, home, section1, section2;
 
         beforeEach(inject(function (_$rootScope_, binPages) {
-            homepage = {
+            home = {
                 id: 'home',
                 name: 'home',
                 priority: 0,
                 active: true
             };
 
-            page1 = {
-                id: 'page1',
-                name: 'page1',
+            section1 = {
+                id: 'section1',
+                name: 'section1',
                 priority: 1,
                 active: false
             };
 
-            page2 = {
-                id: 'page2',
+            section2 = {
+                id: 'section2',
                 customProp: 'prop',
-                name: 'page2',
-                path: '/page2',
+                name: 'section2',
+                path: '/section2',
                 priority: 2,
                 active: false
             };
@@ -85,57 +85,57 @@ describe('application.pages', function () {
             sut = binPages;
         }));
 
-        it('pages are available, homepage is always active', function () {
-            expect(sut.sections).toEqual([homepage, page1, page2]);
+        it('sections are available, homepage is always active', function () {
+            expect(sut.sections).toEqual([home, section1, section2]);
         });
 
         it('homepage is always active', function () {
             expect(sut.isActive('home')).toBeTruthy();
         });
 
-        it('assert inactive page', function () {
-            expect(sut.isActive('page1')).toBeFalsy();
+        it('assert inactive section', function () {
+            expect(sut.isActive('section1')).toBeFalsy();
         });
 
-        it('pages are also available on rootScope', function () {
-            expect($rootScope.application.pages).toEqual({home: homepage, page1: page1, page2: page2});
+        it('sections are also available on rootScope', function () {
+            expect($rootScope.application.pages).toEqual({home: home, section1: section1, section2: section2});
         });
 
         describe('on config update', function () {
             beforeEach(function () {
-                binarta.application.config.cache('application.pages.page1.active', 'true');
+                binarta.application.config.cache('application.pages.section1.active', 'true');
             });
 
             it('page is updated', function () {
-                expect(sut.sections[1].id).toEqual('page1');
+                expect(sut.sections[1].id).toEqual('section1');
                 expect(sut.sections[1].active).toBeTruthy();
             });
 
             it('page is also updated on rootScope', function () {
-                expect($rootScope.application.pages.page1.active).toBeTruthy();
+                expect($rootScope.application.pages.section1.active).toBeTruthy();
             });
 
             it('page is active', function () {
-                expect(sut.isActive('page1')).toBeTruthy();
+                expect(sut.isActive('section1')).toBeTruthy();
             });
         });
 
         describe('on config update with boolean', function () {
             beforeEach(function () {
-                binarta.application.config.cache('application.pages.page1.active', true);
+                binarta.application.config.cache('application.pages.section1.active', true);
             });
 
             it('page is updated', function () {
-                expect(sut.sections[1].id).toEqual('page1');
+                expect(sut.sections[1].id).toEqual('section1');
                 expect(sut.sections[1].active).toBeTruthy();
             });
 
             it('page is also updated on rootScope', function () {
-                expect($rootScope.application.pages.page1.active).toBeTruthy();
+                expect($rootScope.application.pages.section1.active).toBeTruthy();
             });
 
             it('page is active', function () {
-                expect(sut.isActive('page1')).toBeTruthy();
+                expect(sut.isActive('section1')).toBeTruthy();
             });
         });
 
@@ -168,7 +168,7 @@ describe('application.pages', function () {
 
             describe('when not the homepage', function () {
                beforeEach(function () {
-                   sut.editSection('page2');
+                   sut.editSection('section2');
                    scope = editModeRenderer.open.calls.mostRecent().args[0].scope;
                });
 
@@ -180,7 +180,7 @@ describe('application.pages', function () {
                 });
 
                 it('page is available', function () {
-                    expect(scope.page).toEqual(page2);
+                    expect(scope.page).toEqual(section2);
                 });
 
                 it('page is a copy and not a reference', function () {
@@ -279,7 +279,7 @@ describe('application.pages', function () {
 
                     it('translate is called', function () {
                         expect(i18n.translate).toHaveBeenCalledWith({
-                            code: 'navigation.label.page2',
+                            code: 'navigation.label.section2',
                             translation: 'updated'
                         });
                     });
@@ -325,6 +325,79 @@ describe('application.pages', function () {
         });
     });
 
+    describe('binSection component', function () {
+        var section1, section2, section3;
+
+        beforeEach(inject(function ($componentController) {
+            section1 = $componentController('binSection');
+            section2 = $componentController('binSection');
+            section3 = $componentController('binSection');
+        }));
+
+        describe('1 registered section', function () {
+            beforeEach(function () {
+                section1.$onInit();
+            });
+
+            it('without defining an id, the section is always active', function () {
+                expect(section1.isActive()).toBeTruthy();
+            });
+
+            it('section has the "odd" css class', function () {
+                expect(section1.cssClass).toEqual('odd');
+            });
+
+            describe('2 registered sections', function () {
+                beforeEach(function () {
+                    section2.id = 'home';
+                    section2.$onInit();
+                });
+
+                it('section is home section, always active', function () {
+                    expect(section2.isActive()).toBeTruthy();
+                });
+
+                it('assert css classes', function () {
+                    expect(section1.cssClass).toEqual('odd');
+                    expect(section2.cssClass).toEqual('even');
+                });
+
+                describe('3 registered sections', function () {
+                    beforeEach(function () {
+                        section3.id = 'section1';
+                        section3.$onInit();
+                    });
+
+                    it('section is not active', function () {
+                        expect(section3.isActive()).toBeFalsy();
+                    });
+
+                    it('assert css classes', function () {
+                        expect(section1.cssClass).toEqual('odd');
+                        expect(section2.cssClass).toEqual('even');
+                        expect(section3.cssClass).toBeUndefined();
+                    });
+
+                    describe('when section becomes active', function () {
+                        beforeEach(function () {
+                            binarta.application.config.cache('application.pages.section1.active', true);
+                        });
+
+                        it('section is active', function () {
+                            expect(section3.isActive()).toBeTruthy();
+                        });
+
+                        it('assert css classes', function () {
+                            expect(section1.cssClass).toEqual('odd');
+                            expect(section2.cssClass).toEqual('even');
+                            expect(section3.cssClass).toEqual('odd');
+                        });
+                    });
+                });
+            });
+        });
+    });
+
     describe('applicationPageController', function () {
         var ctrl, i18nResolveDeferred, i18nTranslateDeferred;
 
@@ -358,7 +431,7 @@ describe('application.pages', function () {
 
                 it('resolve page translations', function () {
                     expect(i18n.resolve.calls.first().args[0]).toEqual({code: 'navigation.label.home'});
-                    expect(i18n.resolve.calls.mostRecent().args[0]).toEqual({code: 'navigation.label.page2'});
+                    expect(i18n.resolve.calls.mostRecent().args[0]).toEqual({code: 'navigation.label.section2'});
                 });
 
                 describe('when translations are rejected', function () {
@@ -375,19 +448,19 @@ describe('application.pages', function () {
                             active: true,
                             translation: 'home'
                         }, {
-                            id: 'page1',
-                            name: 'page1',
+                            id: 'section1',
+                            name: 'section1',
                             priority: 1,
                             active: false,
-                            translation: 'page1'
+                            translation: 'section1'
                         }, {
-                            id: 'page2',
-                            name: 'page2',
+                            id: 'section2',
+                            name: 'section2',
                             customProp: 'prop',
-                            path: '/page2',
+                            path: '/section2',
                             priority: 2,
                             active: false,
-                            translation: 'page2'
+                            translation: 'section2'
                         }]);
 
                         expect(scope.pages.after).toEqual([{
@@ -397,19 +470,19 @@ describe('application.pages', function () {
                             active: true,
                             translation: 'home'
                         }, {
-                            id: 'page1',
-                            name: 'page1',
+                            id: 'section1',
+                            name: 'section1',
                             priority: 1,
                             active: false,
-                            translation: 'page1'
+                            translation: 'section1'
                         }, {
-                            id: 'page2',
-                            name: 'page2',
+                            id: 'section2',
+                            name: 'section2',
                             customProp: 'prop',
-                            path: '/page2',
+                            path: '/section2',
                             priority: 2,
                             active: false,
-                            translation: 'page2'
+                            translation: 'section2'
                         }]);
                     });
                 });
@@ -428,16 +501,16 @@ describe('application.pages', function () {
                             active: true,
                             translation: 'translation'
                         }, {
-                            name: 'page1',
-                            id: 'page1',
+                            name: 'section1',
+                            id: 'section1',
                             priority: 1,
                             active: false,
                             translation: 'translation'
                         }, {
-                            name: 'page2',
-                            id: 'page2',
+                            name: 'section2',
+                            id: 'section2',
                             customProp: 'prop',
-                            path: '/page2',
+                            path: '/section2',
                             priority: 2,
                             active: false,
                             translation: 'translation'
@@ -450,16 +523,16 @@ describe('application.pages', function () {
                             active: true,
                             translation: 'translation'
                         }, {
-                            name: 'page1',
-                            id: 'page1',
+                            name: 'section1',
+                            id: 'section1',
                             priority: 1,
                             active: false,
                             translation: 'translation'
                         }, {
-                            name: 'page2',
-                            id: 'page2',
+                            name: 'section2',
+                            id: 'section2',
                             customProp: 'prop',
-                            path: '/page2',
+                            path: '/section2',
                             priority: 2,
                             active: false,
                             translation: 'translation'
@@ -503,7 +576,7 @@ describe('application.pages', function () {
                                     expect(configWriter.calls.first().args[0]).toEqual({
                                         $scope: scope,
                                         scope: 'public',
-                                        key: 'application.pages.page1.active',
+                                        key: 'application.pages.section1.active',
                                         value: true
                                     });
                                 });
@@ -511,7 +584,7 @@ describe('application.pages', function () {
                                 it('update translations', function () {
                                     expect(i18n.translate.calls.count()).toEqual(1);
                                     expect(i18n.translate).toHaveBeenCalledWith({
-                                        code: 'navigation.label.page1',
+                                        code: 'navigation.label.section1',
                                         translation: 'updated'
                                     });
                                 });
@@ -525,7 +598,7 @@ describe('application.pages', function () {
 
                                     it('i18n.updated notification is fired', function () {
                                         expect(dispatcher.fire).toHaveBeenCalledWith('i18n.updated', {
-                                            code: 'navigation.label.page1',
+                                            code: 'navigation.label.section1',
                                             translation: 'updated'
                                         });
                                     });
