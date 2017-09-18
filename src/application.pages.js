@@ -266,8 +266,8 @@
             };
 
             function isActive() {
-                if (!section) return true;
-                return section.active;
+                if (!$ctrl.id) return true;
+                return section && section.active;
             }
 
             function setCssClass(c) {

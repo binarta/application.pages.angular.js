@@ -326,12 +326,13 @@ describe('application.pages', function () {
     });
 
     describe('binSection component', function () {
-        var section1, section2, section3;
+        var section1, section2, section3, section4;
 
         beforeEach(inject(function ($componentController) {
             section1 = $componentController('binSection');
             section2 = $componentController('binSection');
             section3 = $componentController('binSection');
+            section4 = $componentController('binSection');
         }));
 
         describe('1 registered section', function () {
@@ -391,6 +392,17 @@ describe('application.pages', function () {
                             expect(section1.cssClass).toEqual('odd');
                             expect(section2.cssClass).toEqual('even');
                             expect(section3.cssClass).toEqual('odd');
+                        });
+
+                        describe('when section has unknown id', function () {
+                            beforeEach(function () {
+                                section4.id = 'unknown';
+                                section4.$onInit();
+                            });
+
+                            it('section is not active', function () {
+                                expect(section4.isActive()).toBeFalsy();
+                            });
                         });
                     });
                 });
