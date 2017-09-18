@@ -57,7 +57,7 @@ describe('application.pages', function () {
     describe('binSections service', function () {
         var $rootScope, sut, home, section1, section2;
 
-        beforeEach(inject(function (_$rootScope_, binPages) {
+        beforeEach(inject(function (_$rootScope_, binSections) {
             home = {
                 id: 'home',
                 name: 'home',
@@ -82,7 +82,7 @@ describe('application.pages', function () {
             };
 
             $rootScope = _$rootScope_;
-            sut = binPages;
+            sut = binSections;
         }));
 
         it('sections are available, homepage is always active', function () {
