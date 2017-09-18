@@ -1,27 +1,28 @@
 (function () {
     'use strict';
     angular.module('application.pages', ['binarta-applicationjs-angular1', 'config', 'toggle.edit.mode', 'i18n', 'notifications'])
-        .service('binPages', ['$rootScope', '$q', 'binarta', 'config', 'editModeRenderer', 'configWriter', 'i18n', 'i18nLocation', 'topicMessageDispatcher', BinPagesService])
-        .component('binPageName', new BinPageNameComponent())
-        .controller('applicationPageController', ['binPages', ApplicationPageController])
-        .run(['binPages', function () {}]);
+        .service('binPages', ['$rootScope', '$q', 'binarta', 'config', 'editModeRenderer', 'configWriter', 'i18n', 'i18nLocation', 'topicMessageDispatcher', BinSectionsService])
+        .service('binSections', ['$rootScope', '$q', 'binarta', 'config', 'editModeRenderer', 'configWriter', 'i18n', 'i18nLocation', 'topicMessageDispatcher', BinSectionsService])
+        .component('binSectionName', new BinSectionNameComponent())
+        .controller('applicationPageController', ['binSections', ApplicationPageController])
+        .run(['binSections', function () {}]);
 
     var i18nNavPrefix = 'navigation.label.';
 
-    function BinPagesService($rootScope, $q, binarta, config, renderer, writer, i18n, location, dispatcher) {
+    function BinSectionsService($rootScope, $q, binarta, config, renderer, writer, i18n, location, dispatcher) {
         var self = this;
-        self.pages = [];
+        self.sections = [];
         initPagesOnRootScope();
         if (config.application && config.application.pages) config.application.pages.forEach(function (page) {
             var priority = config.application.pages.indexOf(page);
             if (typeof page  !== 'object') page = {id: page};
             page.name = page.id;
             page.priority = priority;
-            self.pages.push(page);
+            self.sections.push(page);
             pushPageOnRootScope(page);
         });
 
-        self.pages.forEach(function (page) {
+        self.sections.forEach(function (page) {
             if (isHomePage(page)) updatePageStatus(page, true);
             else {
                 binarta.application.config.observePublic('application.pages.' + page.id + '.active', function(value) {
@@ -50,9 +51,9 @@
 
         function findPageById(id) {
             var page;
-            for(var i = 0; i < self.pages.length; i++) {
-                if (self.pages[i].id === id) {
-                    page = self.pages[i];
+            for(var i = 0; i < self.sections.length; i++) {
+                if (self.sections[i].id === id) {
+                    page = self.sections[i];
                     break;
                 }
             }
@@ -63,7 +64,7 @@
             return findPageById(id).active;
         };
 
-        this.editPage = function (id) {
+        this.editSection = function (id) {
             var scope = $rootScope.$new();
             var page = findPageById(id);
             scope.lang = binarta.application.localeForPresentation();
@@ -108,7 +109,7 @@
             });
         };
 
-        this.editPages = function () {
+        this.editSections = function () {
             var rendererScope = $rootScope.$new();
 
             rendererScope.pages = {
@@ -116,7 +117,7 @@
                 after: []
             };
 
-            self.pages.forEach(function (page) {
+            self.sections.forEach(function (page) {
                 i18n.resolve({
                     code: i18nNavPrefix + page.name
                 }).then(function (translation) {
@@ -182,14 +183,14 @@
         }
     }
 
-    function BinPageNameComponent() {
+    function BinSectionNameComponent() {
         this.template = '<span ng-bind="$ctrl.name"></span>';
 
         this.bindings = {
             id: '@pageId'
         };
 
-        this.controller = ['$scope', '$element', 'i18n', 'editMode', 'binPages', function ($scope, $element, i18n, editMode, binPages) {
+        this.controller = ['$scope', '$element', 'i18n', 'editMode', 'binSections', function ($scope, $element, i18n, editMode, binSections) {
             var $ctrl = this;
 
             $ctrl.$onInit = function () {
@@ -202,7 +203,7 @@
                     element: $element,
                     permission: 'edit.mode',
                     onClick: function () {
-                        binPages.editPage($ctrl.id);
+                        binSections.editSection($ctrl.id);
                     }
                 });
 
@@ -213,7 +214,7 @@
         }];
     }
 
-    function ApplicationPageController(binPages) {
-        this.open = binPages.editPages;
+    function ApplicationPageController(binSections) {
+        this.open = binSections.editSections;
     }
 })();

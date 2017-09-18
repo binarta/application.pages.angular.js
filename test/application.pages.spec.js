@@ -86,7 +86,7 @@ describe('application.pages', function () {
         }));
 
         it('pages are available, homepage is always active', function () {
-            expect(sut.pages).toEqual([homepage, page1, page2]);
+            expect(sut.sections).toEqual([homepage, page1, page2]);
         });
 
         it('homepage is always active', function () {
@@ -107,8 +107,8 @@ describe('application.pages', function () {
             });
 
             it('page is updated', function () {
-                expect(sut.pages[1].id).toEqual('page1');
-                expect(sut.pages[1].active).toBeTruthy();
+                expect(sut.sections[1].id).toEqual('page1');
+                expect(sut.sections[1].active).toBeTruthy();
             });
 
             it('page is also updated on rootScope', function () {
@@ -126,8 +126,8 @@ describe('application.pages', function () {
             });
 
             it('page is updated', function () {
-                expect(sut.pages[1].id).toEqual('page1');
-                expect(sut.pages[1].active).toBeTruthy();
+                expect(sut.sections[1].id).toEqual('page1');
+                expect(sut.sections[1].active).toBeTruthy();
             });
 
             it('page is also updated on rootScope', function () {
@@ -153,7 +153,7 @@ describe('application.pages', function () {
 
             describe('when homepage', function () {
                 beforeEach(function () {
-                    sut.editPage('home');
+                    sut.editSection('home');
                     scope = editModeRenderer.open.calls.mostRecent().args[0].scope;
                 });
 
@@ -168,7 +168,7 @@ describe('application.pages', function () {
 
             describe('when not the homepage', function () {
                beforeEach(function () {
-                   sut.editPage('page2');
+                   sut.editSection('page2');
                    scope = editModeRenderer.open.calls.mostRecent().args[0].scope;
                });
 
@@ -185,7 +185,7 @@ describe('application.pages', function () {
 
                 it('page is a copy and not a reference', function () {
                     scope.page.test = true;
-                    expect(sut.pages[2].test).toBeFalsy();
+                    expect(sut.sections[2].test).toBeFalsy();
                 });
 
                 it('current language is available', function () {
