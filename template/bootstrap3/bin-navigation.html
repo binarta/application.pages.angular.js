@@ -1,0 +1,15 @@
+<div class="nav-wrapper">
+    <ul class="nav navbar-nav">
+        <li ng-class="{active: $ctrl.isOnPath(section.path), disabled: !section.active}"
+            ng-repeat="section in ::$ctrl.sections track by section.id" ng-if="section.active || $ctrl.editing">
+            <a bin-href="{{::section.path}}" du-smooth-scroll>
+                <div class="nav-icon" ng-if="::section.defaultIcon">
+                    <i class="fa fa-fw" ng-class="::section.defaultIcon"></i>
+                </div>
+                <bin-section-name section-id="{{::section.id}}"></bin-section-name>
+            </a>
+        </li>
+    </ul>
+</div>
+<button class="arrow arrow-left hidden" ng-click="$ctrl.moveLeft()"><i class="fa fa-chevron-left"></i></button>
+<button class="arrow arrow-right hidden" ng-click="$ctrl.moveRight()"><i class="fa fa-chevron-right"></i></button>

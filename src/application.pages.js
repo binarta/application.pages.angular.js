@@ -1,9 +1,10 @@
 (function () {
     'use strict';
-    angular.module('application.pages', ['binarta-applicationjs-angular1', 'config', 'toggle.edit.mode', 'i18n', 'notifications'])
+    angular.module('application.pages', ['binarta-applicationjs-angular1', 'angularx', 'config', 'toggle.edit.mode', 'i18n', 'notifications'])
         .service('binSections', ['$rootScope', '$q', 'binarta', 'config', 'editModeRenderer', 'configWriter', 'i18n', 'i18nLocation', 'topicMessageDispatcher', BinSectionsService])
         .component('binSectionName', new BinSectionNameComponent())
         .component('binSection', new BinSectionComponent())
+        .component('binNavigation', new BinNavigationComponent())
         .controller('applicationPageController', ['binSections', ApplicationPageController])
         .run(['binSections', function () {}]);
 
@@ -19,7 +20,7 @@
 
         if (config.application && config.application.pages) config.application.pages.forEach(function (section) {
             var priority = config.application.pages.indexOf(section);
-            if (typeof section  !== 'object') section = {id: section};
+            if (typeof section !== 'object') section = {id: section};
             section.name = section.id;
             section.priority = priority;
             self.sections.push(section);
@@ -29,7 +30,7 @@
         self.sections.forEach(function (section) {
             if (isHome(section)) updateSectionStatus(section, true);
             else {
-                binarta.application.config.observePublic('application.pages.' + section.id + '.active', function(value) {
+                binarta.application.config.observePublic('application.pages.' + section.id + '.active', function (value) {
                     updateSectionStatus(section, value === 'true' || value === true);
                 });
             }
@@ -39,7 +40,7 @@
             sectionsOnPage = [];
         });
 
-        this.register = function (args) {
+        this.register = function (args) {
             sectionsOnPage.push(args);
             setSectionClasses();
         };
@@ -168,7 +169,7 @@
 
         function findSectionById(id) {
             var page;
-            for(var i = 0; i < self.sections.length; i++) {
+            for (var i = 0; i < self.sections.length; i++) {
                 if (self.sections[i].id === id) {
                     page = self.sections[i];
                     break;
@@ -254,7 +255,7 @@
             var $ctrl = this;
             var section;
 
-            $ctrl.$onInit = function () {
+            $ctrl.$onInit = function () {
                 if ($ctrl.id) section = binSections.findById($ctrl.id);
 
                 binSections.register({
@@ -274,6 +275,82 @@
                 $ctrl.cssClass = c;
             }
         }];
+    }
+
+    function BinNavigationComponent() {
+        this.templateUrl = 'bin-navigation.html';
+
+        this.controller = ['$element', 'binarta', 'binSections', 'topicRegistry', 'binResizeSensor', function ($element, binarta, binSections, topics, binResizeSensor) {
+            var $ctrl = this;
+
+            $ctrl.$onInit = function () {
+                var navbar = $element.find('.nav-wrapper');
+                var navbarNav = $element.find('.navbar-nav');
+                var arrowRight = $element.find('.arrow-right');
+                var arrowLeft = $element.find('.arrow-left');
+                var canMoveToLeft = false, canMoveToRight = false;
+
+                binResizeSensor(navbar, setArrows);
+                navbar.on('scroll', setArrows);
+
+                $ctrl.sections = binSections.sections;
+
+                $ctrl.moveLeft = function () {
+                    if (canMoveToLeft) {
+                        var currentPos = navbar.scrollLeft();
+                        scrollToPosition(currentPos - getContainerWidth());
+                    }
+                };
+
+                $ctrl.moveRight = function () {
+                    if (canMoveToRight) {
+                        var currentPos = navbar.scrollLeft();
+                        scrollToPosition(currentPos + getContainerWidth());
+                    }
+                };
+
+                $ctrl.isOnPath = function (path) {
+                    if (!path) return false;
+                    return binarta.application.unlocalizedPath() === path;
+                };
+
+                function setArrows() {
+                    var offset = 15;
+                    var pos = navbar.scrollLeft();
+                    canMoveToLeft = pos > offset;
+                    canMoveToLeft ? arrowLeft.removeClass('hidden') : arrowLeft.addClass('hidden');
+                    canMoveToRight = pos < getNavbarWidth() - getContainerWidth() - offset;
+                    canMoveToRight ? arrowRight.removeClass('hidden') : arrowRight.addClass('hidden');
+                }
+
+                function getContainerWidth() {
+                    return getComputedWidth(navbar[0]);
+                }
+
+                function getNavbarWidth() {
+                    return getComputedWidth(navbarNav[0]);
+                }
+
+                function scrollToPosition(p) {
+                    navbar.animate({scrollLeft: p}, 200);
+                }
+
+                function getComputedWidth(el) {
+                    return parseInt(window.getComputedStyle(el, null).getPropertyValue('width'), 10) || 0;
+                }
+
+                function editModeListener(editing) {
+                    $ctrl.editing = editing;
+                }
+
+                topics.subscribe('edit.mode', editModeListener);
+
+                $ctrl.$onDestroy = function () {
+                    topics.unsubscribe('edit.mode', editModeListener);
+                };
+            };
+        }];
+
     }
 
     function ApplicationPageController(binSections) {
