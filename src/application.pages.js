@@ -257,7 +257,7 @@
             templateUrl: '@'
         };
 
-        this.controller = ['binSections', function (binSections) {
+        this.controller = ['binSections', 'topicRegistry', function (binSections, topicRegistry) {
             var $ctrl = this;
             var section;
 
@@ -270,6 +270,12 @@
                 });
 
                 $ctrl.isActive = isActive;
+
+                topicRegistry.subscribe('edit.mode', editModeListener);
+
+                $ctrl.$onDestroy = function () {
+                    topicRegistry.unsubscribe('edit.mode', editModeListener);
+                };
             };
 
             function isActive() {
@@ -278,6 +284,10 @@
 
             function setCssClass(c) {
                 $ctrl.cssClass = c;
+            }
+
+            function editModeListener(editing) {
+                $ctrl.editing = editing;
             }
         }];
     }
