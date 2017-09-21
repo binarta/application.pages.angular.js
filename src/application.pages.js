@@ -260,9 +260,16 @@
         this.controller = ['binSections', 'topicRegistry', function (binSections, topicRegistry) {
             var $ctrl = this;
             var section;
+            $ctrl.i18n = {};
 
             $ctrl.$onInit = function () {
-                if ($ctrl.id) section = binSections.findById($ctrl.id);
+                if ($ctrl.id) {
+                    section = binSections.findById($ctrl.id);
+
+                    $ctrl.i18n.title = $ctrl.id + '.title';
+                    $ctrl.i18n.body = $ctrl.id + '.body';
+                    $ctrl.i18n.cta = $ctrl.id + '.cta';
+                }
 
                 binSections.register({
                     isActive: isActive,
