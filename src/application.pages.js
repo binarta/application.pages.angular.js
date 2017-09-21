@@ -4,6 +4,7 @@
         .service('binSections', ['$rootScope', '$q', 'binarta', 'config', 'editModeRenderer', 'configWriter', 'i18n', 'i18nLocation', 'topicMessageDispatcher', BinSectionsService])
         .component('binSectionName', new BinSectionNameComponent())
         .component('binSection', new BinSectionComponent())
+        .component('binSectionTitle', new BinSectionTitleComponent())
         .component('binNavigation', new BinNavigationComponent())
         .controller('applicationPageController', ['binSections', ApplicationPageController])
         .run(['binSections', function () {}]);
@@ -297,6 +298,28 @@
                 $ctrl.editing = editing;
             }
         }];
+    }
+
+    function BinSectionTitleComponent() {
+        this.template = '<span i18n code="{{::$ctrl.c}}" default="{{::$ctrl.d}}" ng-bind="var"></span>';
+
+        this.bindings = {
+            code: '@',
+            default: '@'
+        };
+
+        this.require = {
+            sectionCtrl: '^^binSection'
+        };
+
+        this.controller = function () {
+            var $ctrl = this;
+
+            $ctrl.$onInit = function () {
+                $ctrl.c = $ctrl.code || (($ctrl.sectionCtrl.id || 'unknown') + '.title');
+                $ctrl.d = $ctrl.default || 'Title';
+            };
+        };
     }
 
     function BinNavigationComponent() {
