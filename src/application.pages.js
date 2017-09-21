@@ -245,12 +245,16 @@
     }
 
     function BinSectionComponent() {
-        this.template = '<section ng-class="$ctrl.cssClass" ng-if="$ctrl.isActive()" ng-transclude></section>';
+        this.template = '<section ng-class="$ctrl.cssClass" ng-if="$ctrl.isActive()">' +
+            '<div ng-if="::$ctrl.templateUrl" ng-include="$ctrl.templateUrl"></div>' +
+            '<div ng-if="::!$ctrl.templateUrl" ng-transclude></div>' +
+            '</section>';
 
         this.transclude = true;
 
         this.bindings = {
-            id: '@'
+            id: '@',
+            templateUrl: '@'
         };
 
         this.controller = ['binSections', function (binSections) {
