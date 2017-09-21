@@ -23,12 +23,14 @@
             if (typeof section !== 'object') section = {id: section};
             section.name = section.id;
             section.priority = priority;
+            section.permitted = angular.isUndefined(section.permitted) || section.permitted;
             self.sections.push(section);
             pushSectionOnRootScope(section);
         });
 
         self.sections.forEach(function (section) {
-            if (isHome(section)) updateSectionStatus(section, true);
+            if (!section.permitted) updateSectionStatus(section, false);
+            else if (isHome(section)) updateSectionStatus(section, true);
             else {
                 binarta.application.config.observePublic('application.pages.' + section.id + '.active', function (value) {
                     updateSectionStatus(section, value === 'true' || value === true);
@@ -267,8 +269,7 @@
             };
 
             function isActive() {
-                if (!$ctrl.id) return true;
-                return section && section.active;
+                return !section || section.active;
             }
 
             function setCssClass(c) {

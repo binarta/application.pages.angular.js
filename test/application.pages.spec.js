@@ -8,7 +8,8 @@ describe('application.pages', function () {
                 pages: [
                     {id: 'home'},
                     'section1',
-                    {id: 'section2', customProp: 'prop', path: '/section2'}
+                    {id: 'section2', customProp: 'prop', path: '/section2'},
+                    {id: 'notPermitted', path: '/notPermitted', permitted: false}
                 ]
             }
         })
@@ -55,13 +56,14 @@ describe('application.pages', function () {
     }));
 
     describe('binSections service', function () {
-        var $rootScope, sut, home, section1, section2;
+        var $rootScope, sut, home, section1, section2, sectionNotPermitted;
 
         beforeEach(inject(function (_$rootScope_, binSections) {
             home = {
                 id: 'home',
                 name: 'home',
                 priority: 0,
+                permitted: true,
                 active: true
             };
 
@@ -69,6 +71,7 @@ describe('application.pages', function () {
                 id: 'section1',
                 name: 'section1',
                 priority: 1,
+                permitted: true,
                 active: false
             };
 
@@ -78,6 +81,16 @@ describe('application.pages', function () {
                 name: 'section2',
                 path: '/section2',
                 priority: 2,
+                permitted: true,
+                active: false
+            };
+
+            sectionNotPermitted = {
+                id: 'notPermitted',
+                name: 'notPermitted',
+                path: '/notPermitted',
+                priority: 3,
+                permitted: false,
                 active: false
             };
 
@@ -86,7 +99,7 @@ describe('application.pages', function () {
         }));
 
         it('sections are available, homepage is always active', function () {
-            expect(sut.sections).toEqual([home, section1, section2]);
+            expect(sut.sections).toEqual([home, section1, section2, sectionNotPermitted]);
         });
 
         it('homepage is always active', function () {
@@ -97,8 +110,17 @@ describe('application.pages', function () {
             expect(sut.isActive('section1')).toBeFalsy();
         });
 
+        it('not permitted section is inactive', function () {
+            expect(sut.isActive('notPermitted')).toBeFalsy();
+        });
+
         it('sections are also available on rootScope', function () {
-            expect($rootScope.application.pages).toEqual({home: home, section1: section1, section2: section2});
+            expect($rootScope.application.pages).toEqual({
+                home: home,
+                section1: section1,
+                section2: section2,
+                notPermitted: sectionNotPermitted
+            });
         });
 
         describe('on config update', function () {
@@ -106,17 +128,27 @@ describe('application.pages', function () {
                 binarta.application.config.cache('application.pages.section1.active', 'true');
             });
 
-            it('page is updated', function () {
+            it('section is updated', function () {
                 expect(sut.sections[1].id).toEqual('section1');
                 expect(sut.sections[1].active).toBeTruthy();
             });
 
-            it('page is also updated on rootScope', function () {
+            it('section is also updated on rootScope', function () {
                 expect($rootScope.application.pages.section1.active).toBeTruthy();
             });
 
-            it('page is active', function () {
+            it('section is active', function () {
                 expect(sut.isActive('section1')).toBeTruthy();
+            });
+        });
+
+        describe('on config update for not permitted section', function () {
+            beforeEach(function () {
+                binarta.application.config.cache('application.pages.notPermitted.active', 'true');
+            });
+
+            it('section is still inactive', function () {
+                expect(sut.isActive('notPermitted')).toBeFalsy();
             });
         });
 
@@ -125,16 +157,16 @@ describe('application.pages', function () {
                 binarta.application.config.cache('application.pages.section1.active', true);
             });
 
-            it('page is updated', function () {
+            it('section is updated', function () {
                 expect(sut.sections[1].id).toEqual('section1');
                 expect(sut.sections[1].active).toBeTruthy();
             });
 
-            it('page is also updated on rootScope', function () {
+            it('section is also updated on rootScope', function () {
                 expect($rootScope.application.pages.section1.active).toBeTruthy();
             });
 
-            it('page is active', function () {
+            it('section is active', function () {
                 expect(sut.isActive('section1')).toBeTruthy();
             });
         });
@@ -167,10 +199,10 @@ describe('application.pages', function () {
             });
 
             describe('when not the homepage', function () {
-               beforeEach(function () {
-                   sut.editSection('section2');
-                   scope = editModeRenderer.open.calls.mostRecent().args[0].scope;
-               });
+                beforeEach(function () {
+                    sut.editSection('section2');
+                    scope = editModeRenderer.open.calls.mostRecent().args[0].scope;
+                });
 
                 it('editMode renderer is opened', function () {
                     expect(editModeRenderer.open).toHaveBeenCalledWith({
@@ -400,8 +432,8 @@ describe('application.pages', function () {
                                 section4.$onInit();
                             });
 
-                            it('section is not active', function () {
-                                expect(section4.isActive()).toBeFalsy();
+                            it('section is active', function () {
+                                expect(section4.isActive()).toBeTruthy();
                             });
                         });
                     });
@@ -443,7 +475,7 @@ describe('application.pages', function () {
 
                 it('resolve page translations', function () {
                     expect(i18n.resolve.calls.first().args[0]).toEqual({code: 'navigation.label.home'});
-                    expect(i18n.resolve.calls.mostRecent().args[0]).toEqual({code: 'navigation.label.section2'});
+                    expect(i18n.resolve.calls.mostRecent().args[0]).toEqual({code: 'navigation.label.notPermitted'});
                 });
 
                 describe('when translations are rejected', function () {
@@ -457,12 +489,14 @@ describe('application.pages', function () {
                             id: 'home',
                             name: 'home',
                             priority: 0,
+                            permitted: true,
                             active: true,
                             translation: 'home'
                         }, {
                             id: 'section1',
                             name: 'section1',
                             priority: 1,
+                            permitted: true,
                             active: false,
                             translation: 'section1'
                         }, {
@@ -471,20 +505,31 @@ describe('application.pages', function () {
                             customProp: 'prop',
                             path: '/section2',
                             priority: 2,
+                            permitted: true,
                             active: false,
                             translation: 'section2'
+                        }, {
+                            id: 'notPermitted',
+                            name: 'notPermitted',
+                            path: '/notPermitted',
+                            priority: 3,
+                            permitted: false,
+                            active: false,
+                            translation: 'notPermitted'
                         }]);
 
                         expect(scope.pages.after).toEqual([{
                             id: 'home',
                             name: 'home',
                             priority: 0,
+                            permitted: true,
                             active: true,
                             translation: 'home'
                         }, {
                             id: 'section1',
                             name: 'section1',
                             priority: 1,
+                            permitted: true,
                             active: false,
                             translation: 'section1'
                         }, {
@@ -493,8 +538,17 @@ describe('application.pages', function () {
                             customProp: 'prop',
                             path: '/section2',
                             priority: 2,
+                            permitted: true,
                             active: false,
                             translation: 'section2'
+                        }, {
+                            id: 'notPermitted',
+                            name: 'notPermitted',
+                            path: '/notPermitted',
+                            priority: 3,
+                            permitted: false,
+                            active: false,
+                            translation: 'notPermitted'
                         }]);
                     });
                 });
@@ -510,12 +564,14 @@ describe('application.pages', function () {
                             name: 'home',
                             id: 'home',
                             priority: 0,
+                            permitted: true,
                             active: true,
                             translation: 'translation'
                         }, {
                             name: 'section1',
                             id: 'section1',
                             priority: 1,
+                            permitted: true,
                             active: false,
                             translation: 'translation'
                         }, {
@@ -524,6 +580,15 @@ describe('application.pages', function () {
                             customProp: 'prop',
                             path: '/section2',
                             priority: 2,
+                            permitted: true,
+                            active: false,
+                            translation: 'translation'
+                        }, {
+                            id: 'notPermitted',
+                            name: 'notPermitted',
+                            path: '/notPermitted',
+                            priority: 3,
+                            permitted: false,
                             active: false,
                             translation: 'translation'
                         }]);
@@ -532,12 +597,14 @@ describe('application.pages', function () {
                             name: 'home',
                             id: 'home',
                             priority: 0,
+                            permitted: true,
                             active: true,
                             translation: 'translation'
                         }, {
                             name: 'section1',
                             id: 'section1',
                             priority: 1,
+                            permitted: true,
                             active: false,
                             translation: 'translation'
                         }, {
@@ -546,6 +613,15 @@ describe('application.pages', function () {
                             customProp: 'prop',
                             path: '/section2',
                             priority: 2,
+                            permitted: true,
+                            active: false,
+                            translation: 'translation'
+                        }, {
+                            id: 'notPermitted',
+                            name: 'notPermitted',
+                            path: '/notPermitted',
+                            priority: 3,
+                            permitted: false,
                             active: false,
                             translation: 'translation'
                         }]);
