@@ -6,6 +6,7 @@
         .component('binSection', new BinSectionComponent())
         .component('binSectionTitle', new BinSectionTitleComponent())
         .component('binNavigation', new BinNavigationComponent())
+        .component('binConditionsLink', new BinConditionsLinkComponent())
         .controller('applicationPageController', ['binSections', ApplicationPageController])
         .run(['binSections', function () {}]);
 
@@ -397,6 +398,10 @@
             };
         }];
 
+    }
+
+    function BinConditionsLinkComponent() {
+        this.template = '<a bin-href="/conditions" i18n code="' + i18nNavPrefix + '.conditions" ng-bind="var"></a>';
     }
 
     function ApplicationPageController(binSections) {
