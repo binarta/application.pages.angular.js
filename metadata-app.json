@@ -1,0 +1,13 @@
+{
+  "msgs":{
+    "nl":{
+      "navigation.label.conditions":"algemene voorwaarden"
+    }, "en":{
+      "navigation.label.conditions":"conditions"
+    }, "fr":{
+      "navigation.label.conditions":"termes et conditions"
+    }, "de":{
+      "navigation.label.conditions":"conditions"
+    }
+  }
+}
