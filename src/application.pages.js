@@ -392,6 +392,7 @@
 
                 $ctrl.$onDestroy = function () {
                     topics.unsubscribe('edit.mode', editModeListener);
+                    binResizeSensor.detach(navbar, setArrows);
                 };
             };
         }];
