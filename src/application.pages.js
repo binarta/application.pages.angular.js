@@ -401,7 +401,7 @@
     }
 
     function BinConditionsLinkComponent() {
-        this.template = '<a bin-href="/conditions" i18n code="' + i18nNavPrefix + '.conditions" ng-bind="var"></a>';
+        this.template = '<a bin-href="/conditions" i18n code="navigation.label.conditions" ng-bind="var"></a>';
     }
 
     function ApplicationPageController(binSections) {
