@@ -1,7 +1,8 @@
 <div class="nav-wrapper">
     <ul class="nav navbar-nav">
         <li ng-class="{active: $ctrl.isOnPath(section.path), disabled: !section.active}"
-            ng-repeat="section in ::$ctrl.sections track by section.id" ng-if="section.active || ($ctrl.editing && section.permitted)">
+            ng-repeat="section in ::$ctrl.sections track by section.id"
+            ng-if="section.path && (section.active || ($ctrl.editing && section.permitted))">
             <a bin-href="{{::section.path}}" du-smooth-scroll>
                 <div class="nav-icon" ng-if="::section.defaultIcon">
                     <i class="fa fa-fw" ng-class="::section.defaultIcon"></i>
