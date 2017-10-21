@@ -263,6 +263,7 @@
             var $ctrl = this;
             var section;
             $ctrl.i18n = {};
+            $ctrl.images = {};
 
             $ctrl.$onInit = function () {
                 if ($ctrl.id) {
@@ -271,6 +272,7 @@
                     $ctrl.i18n.title = $ctrl.id + '.title';
                     $ctrl.i18n.body = $ctrl.id + '.body';
                     $ctrl.i18n.cta = $ctrl.id + '.cta';
+                    $ctrl.images.bg = $ctrl.id + '.bg.img';
                 }
 
                 binSections.register({

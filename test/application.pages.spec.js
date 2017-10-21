@@ -38,6 +38,10 @@ describe('application.pages', function () {
     angular.module('notifications', [])
         .service('topicMessageDispatcher', function () {
             return jasmine.createSpyObj('topicMessageDispatcher', ['fire']);
+        })
+        .service('topicRegistry', function () {
+            this.subscribe = jasmine.createSpy('subscribe');
+            this.unsubscribe = jasmine.createSpy('unsubscribe');
         });
 
     beforeEach(module('application.pages'));
@@ -380,6 +384,14 @@ describe('application.pages', function () {
                 expect(section1.cssClass).toEqual('odd');
             });
 
+            it('if section has no id, there are no default i18n codes available', function () {
+                expect(section1.i18n).toEqual({});
+            });
+
+            it('if section has no id, there are no default image codes available', function () {
+                expect(section1.images).toEqual({});
+            });
+
             describe('2 registered sections', function () {
                 beforeEach(function () {
                     section2.id = 'home';
@@ -393,6 +405,20 @@ describe('application.pages', function () {
                 it('assert css classes', function () {
                     expect(section1.cssClass).toEqual('odd');
                     expect(section2.cssClass).toEqual('even');
+                });
+
+                it('assert default i18n codes', function () {
+                    expect(section2.i18n).toEqual({
+                        title: 'home.title',
+                        body: 'home.body',
+                        cta: 'home.cta'
+                    });
+                });
+
+                it('assert default image codes', function () {
+                    expect(section2.images).toEqual({
+                        bg: 'home.bg.img'
+                    });
                 });
 
                 describe('3 registered sections', function () {
