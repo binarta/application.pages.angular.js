@@ -10,7 +10,7 @@
             <table class="table">
                 <tr ng-repeat="page in pages.after | orderBy:'priority'">
                     <td style="width:80px">
-                        <div class="checkbox-switch">
+                        <div class="checkbox-switch" ng-if="::page.name !== 'home'">
                             <input type="checkbox" id="page-{{::page.name}}-switch" ng-model="page.active"
                                    ng-change="togglePage(page)">
                             <label for="page-{{::page.name}}-switch"></label>
