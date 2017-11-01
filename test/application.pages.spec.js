@@ -500,83 +500,8 @@ describe('application.pages', function () {
                 });
 
                 it('resolve page translations', function () {
-                    expect(i18n.resolve.calls.first().args[0]).toEqual({code: 'navigation.label.home'});
-                    expect(i18n.resolve.calls.mostRecent().args[0]).toEqual({code: 'navigation.label.notPermitted'});
-                });
-
-                describe('when translations are rejected', function () {
-                    beforeEach(function () {
-                        i18nResolveDeferred.reject();
-                        scope.$digest();
-                    });
-
-                    it('pages are available with default names', function () {
-                        expect(scope.pages.before).toEqual([{
-                            id: 'home',
-                            name: 'home',
-                            priority: 0,
-                            permitted: true,
-                            active: true,
-                            translation: 'home'
-                        }, {
-                            id: 'section1',
-                            name: 'section1',
-                            priority: 1,
-                            permitted: true,
-                            active: false,
-                            translation: 'section1'
-                        }, {
-                            id: 'section2',
-                            name: 'section2',
-                            customProp: 'prop',
-                            path: '/section2',
-                            priority: 2,
-                            permitted: true,
-                            active: false,
-                            translation: 'section2'
-                        }, {
-                            id: 'notPermitted',
-                            name: 'notPermitted',
-                            path: '/notPermitted',
-                            priority: 3,
-                            permitted: false,
-                            active: false,
-                            translation: 'notPermitted'
-                        }]);
-
-                        expect(scope.pages.after).toEqual([{
-                            id: 'home',
-                            name: 'home',
-                            priority: 0,
-                            permitted: true,
-                            active: true,
-                            translation: 'home'
-                        }, {
-                            id: 'section1',
-                            name: 'section1',
-                            priority: 1,
-                            permitted: true,
-                            active: false,
-                            translation: 'section1'
-                        }, {
-                            id: 'section2',
-                            name: 'section2',
-                            customProp: 'prop',
-                            path: '/section2',
-                            priority: 2,
-                            permitted: true,
-                            active: false,
-                            translation: 'section2'
-                        }, {
-                            id: 'notPermitted',
-                            name: 'notPermitted',
-                            path: '/notPermitted',
-                            priority: 3,
-                            permitted: false,
-                            active: false,
-                            translation: 'notPermitted'
-                        }]);
-                    });
+                    expect(i18n.resolve.calls.first().args[0]).toEqual({code: 'navigation.label.home', default: 'home'});
+                    expect(i18n.resolve.calls.mostRecent().args[0]).toEqual({code: 'navigation.label.notPermitted', default: 'notPermitted'});
                 });
 
                 describe('when translations are resolved', function () {

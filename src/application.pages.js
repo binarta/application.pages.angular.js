@@ -110,13 +110,10 @@
 
             self.sections.forEach(function (page) {
                 i18n.resolve({
-                    code: i18nNavPrefix + page.name
+                    code: i18nNavPrefix + page.name,
+                    default: page.name
                 }).then(function (translation) {
                     page.translation = translation;
-                    rendererScope.pages.before.push(page);
-                    rendererScope.pages.after.push(angular.copy(page));
-                }, function () {
-                    page.translation = page.name;
                     rendererScope.pages.before.push(page);
                     rendererScope.pages.after.push(angular.copy(page));
                 });
