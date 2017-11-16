@@ -268,7 +268,7 @@
             $ctrl.$onInit = function () {
                 if ($ctrl.id) {
                     section = binSections.findById($ctrl.id);
-
+                    if (section) $ctrl.path = section.path;
                     $ctrl.i18n.title = $ctrl.id + '.title';
                     $ctrl.i18n.body = $ctrl.id + '.body';
                     $ctrl.i18n.cta = $ctrl.id + '.cta';

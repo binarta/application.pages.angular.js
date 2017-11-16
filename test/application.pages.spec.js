@@ -471,7 +471,7 @@ describe('application.pages', function () {
 
                 describe('3 registered sections', function () {
                     beforeEach(function () {
-                        section3.id = 'section1';
+                        section3.id = 'section2';
                         section3.$onInit();
                     });
 
@@ -485,9 +485,13 @@ describe('application.pages', function () {
                         expect(section3.cssClass).toBeUndefined();
                     });
 
+                    it('path is available', function () {
+                        expect(section3.path).toEqual('/section2');
+                    });
+
                     describe('when section becomes active', function () {
                         beforeEach(function () {
-                            binarta.application.config.cache('application.pages.section1.active', true);
+                            binarta.application.config.cache('application.pages.section2.active', true);
                         });
 
                         it('section is active', function () {
