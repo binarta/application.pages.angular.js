@@ -149,6 +149,8 @@
 
         };
 
+        this.setSectionClasses = setSectionClasses;
+
         function initSectionsOnRootScope() {
             $rootScope.application = $rootScope.application || {};
             $rootScope.application.pages = {};
@@ -183,7 +185,7 @@
             var odd = true;
 
             sectionsOnPage.forEach(function (section) {
-                if (section.isActive()) {
+                if (section.isActive() && section.isVisible()) {
                     section.setCssClass(odd ? 'odd' : 'even');
                     odd = !odd;
                 }
@@ -244,7 +246,7 @@
     }
 
     function BinSectionComponent() {
-        this.template = '<section ng-class="$ctrl.cssClass" ng-if="$ctrl.isActive()">' +
+        this.template = '<section ng-class="$ctrl.cssClass" ng-show="$ctrl.isVisible()" ng-if="$ctrl.isActive()">' +
             '<div ng-if="::$ctrl.templateUrl" ng-include="$ctrl.templateUrl"></div>' +
             '<div ng-if="::!$ctrl.templateUrl" ng-transclude></div>' +
             '</section>';
@@ -257,8 +259,9 @@
         };
 
         this.controller = ['binSections', 'topicRegistry', function (binSections, topicRegistry) {
-            var $ctrl = this;
-            var section;
+            var $ctrl = this,
+                section,
+                visible = true;
             $ctrl.i18n = {};
             $ctrl.images = {};
 
@@ -272,12 +275,29 @@
                     $ctrl.images.bg = $ctrl.id + '.bg.img';
                 }
 
+                $ctrl.isActive = function () {
+                    return !section || section.active;
+                };
+
+                $ctrl.isVisible = function () {
+                    return visible;
+                };
+
+                $ctrl.hideSection = function () {
+                    visible = false;
+                    binSections.setSectionClasses();
+                };
+
+                $ctrl.showSection = function () {
+                    visible = true;
+                    binSections.setSectionClasses();
+                };
+
                 binSections.register({
-                    isActive: isActive,
+                    isActive: $ctrl.isActive,
+                    isVisible: $ctrl.isVisible,
                     setCssClass: setCssClass
                 });
-
-                $ctrl.isActive = isActive;
 
                 topicRegistry.subscribe('edit.mode', editModeListener);
 
@@ -285,10 +305,6 @@
                     topicRegistry.unsubscribe('edit.mode', editModeListener);
                 };
             };
-
-            function isActive() {
-                return !section || section.active;
-            }
 
             function setCssClass(c) {
                 $ctrl.cssClass = c;

@@ -380,6 +380,10 @@ describe('application.pages', function () {
                 expect(section1.isActive()).toBeTruthy();
             });
 
+            it('without defining an id, the section is always visible', function () {
+                expect(section1.isVisible()).toBeTruthy();
+            });
+
             it('section has the "odd" css class', function () {
                 expect(section1.cssClass).toEqual('odd');
             });
@@ -390,6 +394,30 @@ describe('application.pages', function () {
 
             it('if section has no id, there are no default image codes available', function () {
                 expect(section1.images).toEqual({});
+            });
+
+            describe('section exposes a hide function', function () {
+                beforeEach(function () {
+                    section1.hideSection();
+                });
+
+                it('section is still active', function () {
+                    expect(section1.isActive()).toBeTruthy();
+                });
+
+                it('section is not visible anymore', function () {
+                    expect(section1.isVisible()).toBeFalsy();
+                });
+
+                describe('section exposes a show function', function () {
+                    beforeEach(function () {
+                        section1.showSection();
+                    });
+
+                    it('section is visible again', function () {
+                        expect(section1.isVisible()).toBeTruthy();
+                    });
+                });
             });
 
             describe('2 registered sections', function () {
@@ -418,6 +446,26 @@ describe('application.pages', function () {
                 it('assert default image codes', function () {
                     expect(section2.images).toEqual({
                         bg: 'home.bg.img'
+                    });
+                });
+
+                describe('when hiding the first section', function () {
+                    beforeEach(function () {
+                        section1.hideSection();
+                    });
+
+                    it('css classes are recalculated', function () {
+                        expect(section2.cssClass).toEqual('odd');
+                    });
+
+                    describe('on show the first section', function () {
+                        beforeEach(function () {
+                            section1.showSection();
+                        });
+
+                        it('css classes are recalculated', function () {
+                            expect(section2.cssClass).toEqual('even');
+                        });
                     });
                 });
 
