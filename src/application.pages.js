@@ -33,6 +33,7 @@
         self.sections.forEach(function (section) {
             if (!section.permitted) updateSectionStatus(section, false);
             else if (isHome(section)) updateSectionStatus(section, true);
+            else if (section.active === true) updateSectionStatus(section, true);
             else {
                 binarta.application.config.observePublic('application.pages.' + section.id + '.active', function (value) {
                     updateSectionStatus(section, value === 'true' || value === true);

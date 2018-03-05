@@ -9,6 +9,7 @@ describe('application.pages', function () {
                     {id: 'home'},
                     'section1',
                     {id: 'section2', customProp: 'prop', path: '/section2'},
+                    {id: 'activeSection', path: '/activeSection', permitted: true, active: true},
                     {id: 'notPermitted', path: '/notPermitted', permitted: false}
                 ]
             }
@@ -89,11 +90,20 @@ describe('application.pages', function () {
                 active: false
             };
 
+            activeSection = {
+                id: 'activeSection',
+                name: 'activeSection',
+                path: '/activeSection',
+                priority: 3,
+                permitted: true,
+                active: true
+            };
+
             sectionNotPermitted = {
                 id: 'notPermitted',
                 name: 'notPermitted',
                 path: '/notPermitted',
-                priority: 3,
+                priority: 4,
                 permitted: false,
                 active: false
             };
@@ -103,7 +113,7 @@ describe('application.pages', function () {
         }));
 
         it('sections are available, homepage is always active', function () {
-            expect(sut.sections).toEqual([home, section1, section2, sectionNotPermitted]);
+            expect(sut.sections).toEqual([home, section1, section2, activeSection, sectionNotPermitted]);
         });
 
         it('homepage is always active', function () {
@@ -118,11 +128,16 @@ describe('application.pages', function () {
             expect(sut.isActive('notPermitted')).toBeFalsy();
         });
 
+        it('active section stays active', function () {
+            expect(sut.isActive('activeSection')).toBeTruthy();
+        });
+
         it('sections are also available on rootScope', function () {
             expect($rootScope.application.pages).toEqual({
                 home: home,
                 section1: section1,
                 section2: section2,
+                activeSection: activeSection,
                 notPermitted: sectionNotPermitted
             });
         });
@@ -584,13 +599,21 @@ describe('application.pages', function () {
                             path: '/section2',
                             priority: 2,
                             permitted: true,
-                            active: false,
+                            active: true,
+                            translation: 'translation'
+                        }, {
+                            id: 'activeSection',
+                            name: 'activeSection',
+                            path: '/activeSection',
+                            priority: 3,
+                            permitted: true,
+                            active: true,
                             translation: 'translation'
                         }, {
                             id: 'notPermitted',
                             name: 'notPermitted',
                             path: '/notPermitted',
-                            priority: 3,
+                            priority: 4,
                             permitted: false,
                             active: false,
                             translation: 'translation'
@@ -617,13 +640,21 @@ describe('application.pages', function () {
                             path: '/section2',
                             priority: 2,
                             permitted: true,
-                            active: false,
+                            active: true,
+                            translation: 'translation'
+                        }, {
+                            id: 'activeSection',
+                            name: 'activeSection',
+                            path: '/activeSection',
+                            priority: 3,
+                            permitted: true,
+                            active: true,
                             translation: 'translation'
                         }, {
                             id: 'notPermitted',
                             name: 'notPermitted',
                             path: '/notPermitted',
-                            priority: 3,
+                            priority: 4,
                             permitted: false,
                             active: false,
                             translation: 'translation'
