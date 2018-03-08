@@ -318,7 +318,7 @@
     }
 
     function BinSectionTitleComponent() {
-        this.template = '<span i18n code="{{::$ctrl.c}}" default="{{::$ctrl.d}}" ng-bind="var"></span>';
+        this.template = '<span i18n code="{{::$ctrl.c}}" default="{{::$ctrl.d}}" editor="input" ng-bind="var"></span>';
 
         this.bindings = {
             code: '@',
