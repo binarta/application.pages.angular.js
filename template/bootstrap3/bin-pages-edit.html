@@ -8,7 +8,7 @@
 
         <div class="form-group">
             <table class="table">
-                <tr ng-repeat="page in pages.after | orderBy:'priority'">
+                <tr ng-repeat="page in pages.after | orderBy:'priority'" ng-if="page.permitted">
                     <td style="width:80px">
                         <div class="checkbox-switch" ng-if="::page.name !== 'home'">
                             <input type="checkbox" id="page-{{::page.name}}-switch" ng-model="page.active"
