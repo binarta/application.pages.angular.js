@@ -318,25 +318,31 @@
     }
 
     function BinSectionTitleComponent() {
-        this.template = '<span i18n code="{{::$ctrl.c}}" default="{{::$ctrl.d}}" editor="input" ng-bind="var"></span>';
+        this.templateUrl = 'bin-section-title.html';
 
         this.bindings = {
             code: '@',
-            default: '@'
+            default: '@',
+        };
+
+        this.transclude = {
+            content: '?content'
         };
 
         this.require = {
             sectionCtrl: '^^binSection'
         };
 
-        this.controller = function () {
+        this.controller = ['$transclude', function ($transclude) {
             var $ctrl = this;
 
             $ctrl.$onInit = function () {
+                $ctrl.hasTranscludedContent = $transclude.isSlotFilled('content');
+                $ctrl.hasNoTranscludedContent = !$ctrl.hasTranscludedContent;
                 $ctrl.c = $ctrl.code || (($ctrl.sectionCtrl.id || 'unknown') + '.title');
                 $ctrl.d = $ctrl.default || 'Title';
             };
-        };
+        }];
     }
 
     function BinNavigationComponent() {

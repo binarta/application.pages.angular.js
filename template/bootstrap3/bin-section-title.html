@@ -1,0 +1,2 @@
+<span ng-if="::$ctrl.hasNoTranscludedContent" i18n code="{{::$ctrl.c}}" default="{{::$ctrl.d}}" editor="input" ng-bind="var"></span>
+<span ng-if="::$ctrl.hasTranscludedContent"><ng-transclude ng-transclude-slot="content"></ng-transclude></span>
